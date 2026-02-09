@@ -17,6 +17,8 @@ class JobItem(scrapy.Item):
     description = scrapy.Field()
     requirements = scrapy.Field()
     salary_range = scrapy.Field()
+    salary_min = scrapy.Field()
+    salary_max = scrapy.Field()
     posted_date = scrapy.Field()
     source_url = scrapy.Field()
     source_platform = scrapy.Field()

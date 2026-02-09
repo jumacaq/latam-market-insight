@@ -1,11 +1,18 @@
 # ETL Pipeline for cleaning, normalizing, and storing data
 # =============================================================================
 
+
+import os
+#import httpx
 import re
 import hashlib
 from datetime import datetime
+
+
 from supabase import create_client
-import os
+from bs4 import BeautifulSoup
+
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -91,23 +98,33 @@ class CleaningPipeline:
     """
 
     def process_item(self, item, spider):
-
+        # Stable job_id for deduplication
+        if not item.get("job_id"):
+            item["job_id"] = self.generate_job_id(item)
+            
         # --- Normalize minimal required fields ---
         item['title'] = self.clean_text(item.get('title'))
         item['company_name'] = self.clean_text(item.get('company_name'))
         item['location'] = self.clean_text(item.get('location'))
-        item['description'] = self.clean_text(item.get('description'))
+        raw_description = item.get('description')
+        if raw_description:
+            item['description'] = self.clean_html(raw_description)
 
-        # Extract country but keep raw location (ETL hará el resto)
-        item['country'] = self.extract_country(item.get('location'))
+        #if not item.get("country"):
+            #item['country'] = self.extract_country(item.get('location'))
 
         # Timestamp
         item['scraped_at'] = datetime.now().isoformat()
 
-        # Stable job_id for deduplication
-        if not item.get("job_id"):
-            item["job_id"] = self.generate_job_id(item)
-
+        
+        #item["seniority_level"] = self.infer_seniority(
+            #item.get("requirements") or item.get("description")
+        #)
+        # Estos campos viajan vacíos, el ETL en Pandas los llenará luego
+        item['country'] = None
+        item['seniority_level'] = None
+        item['salary_min'] = None
+        item['salary_max'] = None
         return item
 
     # -------- BASIC HELPERS: no normalización avanzada aquí -------- #
@@ -115,40 +132,79 @@ class CleaningPipeline:
     def clean_text(t):
         if not t:
             return None
-        t = re.sub(r"\s+", " ", t)
-        return t.strip()
+        #t = re.sub(r"\s+", " ", t)
+        t = t.replace("\u200b", "")
+        return re.sub(r"\s+", " ", t).strip()
+    
 
     @staticmethod
-    def extract_country(location):
-        """Lightweight country detection (ETL will refine later)."""
-        if not location:
+    def clean_html(html):
+        if not html:
             return None
+        soup = BeautifulSoup(html, "html.parser")
+        # Específico para LinkedIn: Quitar botones de "Ver más" y avisos de privacidad
+        for extra in soup.select('.show-more-less-html__button, .ad-banner-container'):
+            extra.decompose()
+        #text = soup.get_text(separator=" ")
+        for junk in soup(["script", "style", "nav", "svg", "button", "header", "footer"]):
+            junk.decompose()
+        text = soup.get_text(separator=" ")
+        #text = re.sub(r"\s+", " ", text)
+        #return text.strip()
+        return re.sub(r"\s+", " ", text).strip()
 
-        location_lower = location.lower()
+    #@staticmethod
+    #def extract_country(location):
+        #"""Lightweight country detection (ETL will refine later)."""
+        #if not location:
+            #return None
 
-        COUNTRY_MAP = {
-            "mexico": "Mexico",
-            "colombia": "Colombia",
-            "argentina": "Argentina",
-            "chile": "Chile",
-            "peru": "Peru",
-            "brazil": "Brazil",
-            "ecuador": "Ecuador"
-        }
+        #location_lower = location.lower()
 
-        for key, country in COUNTRY_MAP.items():
-            if key in location_lower:
-                return country
+        #COUNTRY_MAP = {
+            #"mexico": "Mexico",
+            #"colombia": "Colombia",
+            #"argentina": "Argentina",
+            #"chile": "Chile",
+            #"peru": "Peru",
+            #"brazil": "Brazil",
+            #"ecuador": "Ecuador"
+        #}
 
-        return None
+        #for key, country in COUNTRY_MAP.items():
+            #if key in location_lower:
+                #return country
+
+        #return None
 
     @staticmethod
     def generate_job_id(item):
         """Stable ID based on source_url (best), or fallback."""
-        base = item.get("source_url") or (
-            f"{item.get('title','')}-{item.get('company_name','')}-{item.get('location','')}"
-        )
+        base = (
+            f"{item.get('source_platform','')}"
+            f"{item.get('title','')}"
+            f"{item.get('company_name','')}"
+            f"{item.get('location','')}"
+        ).lower().strip()
         return hashlib.md5(base.encode()).hexdigest()
+    #@staticmethod
+    #def infer_seniority(text):
+        #if not text:
+            #return None
+
+        #t = text.lower()
+
+        #if any(k in t for k in ["sin experiencia", "junior", "practicante", "trainee"]):
+            #return "Junior"
+
+        #if any(k in t for k in ["2 años", "3 años", "mid", "intermedio"]):
+            #return "Mid"
+
+        #if any(k in t for k in ["5 años", "senior", "lead", "líder"]):
+            #return "Senior"
+
+        #return None
+
 
 
 class SkillExtractionPipeline:
@@ -180,9 +236,10 @@ class SkillExtractionPipeline:
     ]
     
     def process_item(self, item, spider):
-        description = item.get('description', '') + ' ' + item.get('requirements', '')
-        extracted_skills = self.extract_skills(description)
-        item['skills'] = extracted_skills
+        #description = item.get('description', '') + ' ' + item.get('requirements', '')
+        full_text = f"{item.get('description') or ''} {item.get('requirements') or ''}"
+        item['skills'] = self.extract_skills(full_text)
+        #item['skills'] = extracted_skills
         return item
     
     def extract_skills(self, text):
@@ -246,8 +303,16 @@ class SupabasePipeline:
             spider.logger.error("Supabase credentials not found in environment variables")
             return
         
-        self.client = create_client(supabase_url, supabase_service_key)
-        spider.logger.info("Connected to Supabase")
+
+        self.client = create_client(
+            supabase_url,
+            supabase_service_key,
+            #options={'http_client': http_client}
+        )
+
+        spider.logger.info("Connected to Supabase ")
+        #self.client = create_client(supabase_url, supabase_service_key)
+        #spider.logger.info("Connected to Supabase")
     
     def process_item(self, item, spider):
         """Insert or update job in database"""
@@ -257,37 +322,49 @@ class SupabasePipeline:
         
         try:
             # Prepare job data
-            job_data = {
-                'job_id': item.get('job_id'),
-                'title': item.get('title'),
-                'company_name': item.get('company_name'),
-                'location': item.get('location'),
-                'country': item.get('country'),
-                'job_type': item.get('job_type'),
-                'seniority_level': item.get('seniority_level'),
-                'sector': item.get('sector'),
-                'description': item.get('description'),
-                'requirements': item.get('requirements'),
-                'salary_range': item.get('salary_range'),
-                'posted_date': item.get('posted_date'),
-                'source_url': item.get('source_url'),
-                'source_platform': item.get('source_platform'),
-                'scraped_at': item.get('scraped_at')
-            }
+            job_data = {k: v for k, v in dict(item).items() if k != 'skills'}
+            self.client.table('jobs').upsert(job_data, on_conflict='job_id').execute()
+            #job_data = {
+                #'job_id': item.get('job_id'),
+                #'title': item.get('title'),
+                #'company_name': item.get('company_name'),
+                #'location': item.get('location'),
+                #'country': item.get('country'),
+                #'job_type': item.get('job_type'),
+                #'seniority_level': item.get('seniority_level'),
+                #'sector': item.get('sector'),
+                #'description': item.get('description'),
+                #'requirements': item.get('requirements'),
+                #'salary_range': item.get('salary_range'),
+                #'posted_date': item.get('posted_date'),
+                #'source_url': item.get('source_url'),
+                #'source_platform': item.get('source_platform'),
+                #'scraped_at': item.get('scraped_at')
+            #}
             
-            # Upsert job (insert or update if exists)
-            response = self.client.table('jobs').upsert(job_data).execute()
-            
+           
             # Insert skills
             if item.get('skills'):
-                job_id = item.get('job_id')
-                for skill in item['skills']:
-                    skill_data = {
-                        'job_id': job_id,
-                        'skill_name': skill,
-                        'skill_category': self.categorize_skill(skill)
-                    }
-                    self.client.table('skills').insert(skill_data).execute()
+                skill_rows = []
+                for s in item['skills']:
+                    skill_rows.append({
+                        "job_id": item["job_id"],
+                        "skill_name": s,
+                        "skill_category": "Pending ETL" # Se categorizará en el ETL
+                    })
+
+                self.client.table("skills").upsert(
+                    skill_rows,
+                    on_conflict="job_id,skill_name"
+                ).execute()
+                #job_id = item.get('job_id')
+                #for skill in item['skills']:
+                    #skill_data = {
+                        #'job_id': job_id,
+                        #'skill_name': skill,
+                        #'skill_category': self.categorize_skill(skill)
+                    #}
+                    #self.client.table('skills').insert(skill_data).execute()
             
             spider.logger.info(f"Saved job: {item.get('title')} at {item.get('company_name')}")
             

@@ -129,8 +129,13 @@ class LinkedInSpider(scrapy.Spider):
                 item['posted_date'] = posted_date
                 item['source_platform'] = 'LinkedIn'
                 
-                item['description'] = f"Vacante: {title} en {company}. Ubicación: {location}."
-                
+                #item['description'] = f"Vacante: {title} en {company}. Ubicación: {location}."
+                # Asegúrate de capturar el HTML crudo para que nuestro CleaningPipeline haga su magia
+                desc_html = response.css('section.show-more-less-html__node').get() or \
+                            response.css('div.description__text').get() or \
+                            response.css('.jobs-description__container').get() or \
+                            response.css('.show-more-less-html__node').get()
+                item['description'] = desc_html if desc_html else "Descripción no disponible."
                 item['seniority_level'] = 'N/A'
                 item['skills'] = []
 

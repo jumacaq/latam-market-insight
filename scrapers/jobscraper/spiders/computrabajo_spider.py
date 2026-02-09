@@ -4,6 +4,7 @@
 import scrapy
 from jobscraper.items import JobItem
 import re
+import datetime
 
 
 class ComputrabajoSpider(scrapy.Spider):
@@ -13,6 +14,8 @@ class ComputrabajoSpider(scrapy.Spider):
         "computrabajo.com.co",
         "computrabajo.com.pe",
         "computrabajo.com.ar",
+        "computrabajo.com.ec",
+        "computrabajo.com.cl"
     ]
     
     custom_settings = {
@@ -84,36 +87,86 @@ class ComputrabajoSpider(scrapy.Spider):
 
         item["source_platform"] = "Computrabajo"
         item["source_url"] = response.url
-        item["job_id"] = self.extract_job_id_from_url(response.url)
+        #item["job_id"] = self.extract_job_id_from_url(response.url)
 
-        # Título
         item["title"] = response.css("h1::text").get()
-
-        # Empresa
-        item["company_name"] = response.css("p.title-company a::text, a.company::text").get()
-        # Solo yield si tiene company_name
-        if item.get("company_name"):
-            yield item
-        else:
-            self.logger.warning(f"Saltado (sin empresa): {response.url}")
+        # Compañía - varios patrones
+        company = response.css("p.title-company a::text").get()
+        if not company:
+            company = response.css("p.title-company::text").get()  # a veces no es link
+        if not company:
+            company = response.css("a.it-blank::text").get()       # patrón frecuente en CT
+        if not company:
+            company = response.css("div[div-link='empresa'] p::text").get()  # sección empresa
+            if company:
+                company = company.strip().split("\n")[0]
+        if company:
+            company = company.strip()
+            if len(company) < 3 or company.lower() in {"empresa", "ver empresa"}:
+                company = None        
+        item["company_name"] = company
+    
+        
+        if not item.get("company_name"):
+            self.logger.warning(f"Saltado (sin empresa) | title={item.get('title')} | url={response.url}")
+            return
         # Ubicación
         location = response.css("p.location span::text").get()
-        item["location"] = location.strip() if location else None
+        if not location:
+            location = response.css("p.location::text").get()
+
+        if location:
+            location = location.strip()
+            loc_lower = location.lower()
+
+            if any(k in loc_lower for k in ["remoto", "trabajo desde casa", "home office"]):
+                location = "Remote"
+
+        item["location"] = location or None
 
         # País
         item["country"] = self.extract_country_from_domain(response.url)
 
         # Descripción
-        desc = response.css("div#detail_box, div.box_detail").get()
-        item["description"] = desc
+        html = response.css("div[div-link='oferta']").get()
+        if not html:
+            self.logger.warning(f"No se encontró descripción en {response.url}")
+        item["description"] = html
 
         # Fecha de publicación
-        raw_date = response.css("span.date, span.dO::text").get()
+        #"span.date, span.dO::text"
+        raw_date = response.css("p.fc_aux.fs13::text").get()
         item["posted_date"] = self.parse_relative_date(raw_date)
 
         # Salario
-        salary = response.css("p.salary span::text, p.salary::text").get()
-        item["salary_range"] = salary.strip() if salary else None
+        tags = response.css(
+            "div[div-link='oferta'] span.tag.base::text"
+        ).getall()
+
+        salary = None
+        for t in tags:
+            t_clean = t.strip()
+
+            # Caso monto explícito
+            if "$" in t_clean and any(ch.isdigit() for ch in t_clean):
+                salary = t_clean
+                break
+
+            # Caso "A convenir"
+            if "convenir" in t_clean.lower():
+                salary = "A convenir"
+                break
+
+        item["salary_range"] = salary
+        
+        requirements_list = response.css(
+            "div[div-link='oferta'] ul.disc li::text"
+        ).getall()
+
+        requirements = " ".join(r.strip() for r in requirements_list if r.strip())
+
+        item["requirements"] = requirements if requirements else None
+
 
         yield item
 
@@ -137,26 +190,33 @@ class ComputrabajoSpider(scrapy.Spider):
 
     @staticmethod
     def parse_relative_date(text):
-        """Convierte 'Hace 3 días' en fecha real"""
+        """
+        Convierte fechas relativas de Computrabajo a YYYY-MM-DD
+        """
         if not text:
             return None
 
-        text = text.lower()
-
-        import datetime
+        text = text.lower().strip()
+        text = re.sub(r"\(.*?\)", "", text).strip()  # quitar "(actualizada)"
 
         today = datetime.date.today()
+    
+        if "hoy" in text:
+            return today.isoformat()
 
-        if "hace" in text:
-            m = re.search(r"hace (\d+) día", text)
-            if m:
-                days = int(m.group(1))
-                return str(today - datetime.timedelta(days=days))
+        if "ayer" in text:
+            return (today - datetime.timedelta(days=1)).isoformat()
 
-            m = re.search(r"hace (\d+) hora", text)
-            if m:
-                hours = int(m.group(1))
-                return str(today)
+        # hace X días
+        m = re.search(r"hace (\d+) día", text)
+        if m:
+            days = int(m.group(1))
+            return (today - datetime.timedelta(days=days)).isoformat()
 
-        # Si no matchea, devolverla cruda para cleaning pipeline
-        return text
+        # hace X horas
+        m = re.search(r"hace (\d+) hora", text)
+        if m:
+            return today.isoformat()
+
+        # fallback: no entendida
+        return None

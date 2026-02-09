@@ -42,4 +42,8 @@ HTTPCACHE_ENABLED = False
 HTTPCACHE_EXPIRATION_SECS = 0
 HTTPCACHE_DIR = 'httpcache'
 
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware': None,
+}
+
 
