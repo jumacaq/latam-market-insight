@@ -2,36 +2,76 @@ name: Daily Job Scraping
 
 on:
   schedule:
-    - cron: '0 10 * * *'  # 10 AM UTC = 5 AM Perú
-  workflow_dispatch:  # Permite ejecución manual
+    - cron: '0 10 * * *'  # 10 AM UTC = 5 AM Lima (Perú)
+  workflow_dispatch:  # Permite ejecución manual desde GitHub UI
 
 jobs:
-  scrape:
+  scrape-and-update:
     runs-on: ubuntu-latest
+    timeout-minutes: 60  # Timeout de 1 hora por seguridad
     
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
     
-    - name: Set up Python
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+        cache: 'pip'
     
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
+        sudo apt-get update
+        sudo apt-get install -y wget gnupg
+    
+    - name: Install Python dependencies
+      run: |
+        pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Run scrapers
+    - name: Run Computrabajo Spider
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       run: |
         cd scrapers
-        scrapy crawl computrabajo -a sector="Data Analyst,Developer" -a location="Peru,Chile"
-        scrapy crawl getonboard -a sector="Data Analyst,Developer"
-        #scrapy crawl linkedin  # Omitir si causa bloqueos
+        scrapy crawl computrabajo
+      continue-on-error: true  # Continúa aunque falle este spider
     
-    - name: Run data cleaning
+    - name: Run GetonBoard Spider
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       run: |
-        python etl/cleaning.py
+        cd scrapers
+        scrapy crawl getonboard
+      continue-on-error: true
+    
+    # LinkedIn comentado porque requiere Playwright y puede ser bloqueado
+    # - name: Run LinkedIn Spider
+    #   env:
+    #     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+    #     SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+    #   run: |
+    #     cd scrapers
+    #     scrapy crawl linkedin
+    #   continue-on-error: true
+    
+   
+    - name: Update Supabase Data
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      run: |
         python etl/update_data.py
+    
+    - name: Upload logs as artifact
+      if: always()  # Sube logs incluso si falla
+      uses: actions/upload-artifact@v3
+      with:
+        name: scraping-logs
+        path: |
+          scrapers/*.log
+          etl/*.log
+        retention-days: 7
