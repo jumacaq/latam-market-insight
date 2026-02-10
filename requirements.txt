@@ -1,6 +1,7 @@
 # Database
-supabase==2.3.0
-python-dotenv==1.0.0
+supabase==2.11.0
+gotrue==2.11.0
+python-dotenv==1.0.1
 
 # Data Processing & Analysis
 pandas
