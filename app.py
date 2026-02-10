@@ -25,24 +25,41 @@ load_dotenv()
 # ========================================
 @st.cache_resource
 def init_connection():
-    # Usamos st.secrets directamente para forzar el error de Streamlit si no existen
     try:
-        url = st.secrets["SUPABASE_URL"]
-        key = st.secrets["SUPABASE_SERVICE_KEY"]
-        return create_client(url, key)
-    except KeyError as e:
-        st.error(f"❌ Error crítico: No se encuentra la llave {e} en st.secrets")
+        # Streamlit Cloud: usa st.secrets
+        # Local: usa .env
+        if "SUPABASE_URL" in st.secrets:
+            url = st.secrets["SUPABASE_URL"]
+            key = st.secrets["SUPABASE_SERVICE_KEY"]
+        else:
+            url = os.getenv("SUPABASE_URL")
+            key = os.getenv("SUPABASE_SERVICE_KEY")
+        
+        # Validaciones
+        if not url or not key:
+            st.error("❌ Credenciales no configuradas")
+            st.info("📌 Streamlit Cloud: Settings → Secrets")
+            st.info("📌 Local: crear archivo .env")
+            st.stop()
+        
+        if not url.startswith("https://"):
+            st.error(f"❌ URL debe empezar con https://")
+            st.stop()
+        
+        if len(key) < 100:
+            st.error(f"❌ SERVICE_KEY inválida (muy corta: {len(key)} chars)")
+            st.stop()
+        
+        # IMPORTANTE: Crear cliente SIN parámetros opcionales problemáticos
+        return create_client(
+            supabase_url=url,
+            supabase_key=key
+        )
+        
+    except Exception as e:
+        st.error(f"❌ Error: {type(e).__name__}")
+        st.code(str(e))
         st.stop()
-    #url = st.secrets["SUPABASE_URL"] if "SUPABASE_URL" in st.secrets else os.getenv("SUPABASE_URL")
-    #key = st.secrets["SUPABASE_SERVICE_KEY"] if "SUPABASE_SERVICE_KEY" in st.secrets else os.getenv("SUPABASE_SERVICE_KEY")
-    
-    #if not url or not key:
-        #st.error("⚠️ Credenciales de Supabase no encontradas. Configúralas en los Secrets de Streamlit.")
-        st.stop()
-    #return create_client(
-        #url, 
-        #key
-    #)
 
 supabase = init_connection()
 
