@@ -4,12 +4,12 @@ gotrue==2.11.0
 python-dotenv==1.0.1
 
 # Data Processing & Analysis
-pandas
+pandas>=2.0.0
 numpy
 plotly==5.18.0
 altair<5  
 # Dashboard
-streamlit
+streamlit>=1.31.0
 
 # Utilities
 python-dateutil==2.8.2

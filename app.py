@@ -161,7 +161,7 @@ st.sidebar.header("🔍 Panel de Filtros")
 
 if not df_raw.empty:
     # Filtro de Fecha
-    dias = st.sidebar.slider("Días atrás:", 1, 60, 30, key='dias_slider')
+    dias = st.sidebar.slider("Días atrás:", 1, 30, 15, key='dias_slider')
     fecha_limite = datetime.now() - timedelta(days=dias)
     
     # Filtro de Países
