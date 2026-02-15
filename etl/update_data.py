@@ -12,8 +12,8 @@ load_dotenv()
 # ---------------------------------------------------
 # CONFIGURACIÓN SUPABASE
 # ---------------------------------------------------
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") 
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY") 
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise ValueError("❌ Error: SUPABASE_URL o SUPABASE_SERVICE_KEY no encontrados en .env")

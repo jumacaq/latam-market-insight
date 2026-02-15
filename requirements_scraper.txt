@@ -7,8 +7,9 @@ webdriver-manager==4.0.1
 fake-useragent==1.4.0
 
 # Database
-supabase==2.3.0
-python-dotenv==1.0.0
+supabase==2.11.0
+gotrue==2.11.0
+python-dotenv==1.0.1
 
 # Data Processing
 pandas==2.1.4
