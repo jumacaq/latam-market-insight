@@ -49,14 +49,14 @@ jobs:
       continue-on-error: true
     
     # LinkedIn comentado porque requiere Playwright y puede ser bloqueado
-    # - name: Run LinkedIn Spider
-    #   env:
-    #     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-    #     SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-    #   run: |
-    #     cd scrapers
-    #     scrapy crawl linkedin
-    #   continue-on-error: true
+    - name: Run LinkedIn Spider
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      run: |
+        cd scrapers
+        scrapy crawl linkedin
+      continue-on-error: true
     
    
     - name: Update Supabase Data
@@ -68,7 +68,7 @@ jobs:
     
     - name: Upload logs as artifact
       if: always()  # Sube logs incluso si falla
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: scraping-logs
         path: |
