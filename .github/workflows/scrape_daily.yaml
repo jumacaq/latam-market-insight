@@ -49,14 +49,14 @@ jobs:
       continue-on-error: true
     
     # LinkedIn comentado porque requiere Playwright y puede ser bloqueado
-    - name: Run LinkedIn Spider
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-      run: |
-        cd scrapers
-        scrapy crawl linkedin -s LOG_FILE=linkedin.log
-      continue-on-error: true
+    #- name: Run LinkedIn Spider
+      #env:
+        #SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        #SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      #run: |
+        #cd scrapers
+        #scrapy crawl linkedin -s LOG_FILE=linkedin.log
+      #continue-on-error: true
     
    
     - name: Update Supabase Data
