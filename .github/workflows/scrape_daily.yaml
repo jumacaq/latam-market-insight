@@ -12,10 +12,10 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         cache: 'pip'
@@ -36,7 +36,7 @@ jobs:
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       run: |
         cd scrapers
-        scrapy crawl computrabajo
+        scrapy crawl computrabajo -s LOG_FILE=computrabajo.log
       continue-on-error: true  # Continúa aunque falle este spider
     
     - name: Run GetonBoard Spider
@@ -45,7 +45,7 @@ jobs:
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       run: |
         cd scrapers
-        scrapy crawl getonboard
+        scrapy crawl getonboard -s LOG_FILE=getonboard.log
       continue-on-error: true
     
     # LinkedIn comentado porque requiere Playwright y puede ser bloqueado
@@ -55,7 +55,7 @@ jobs:
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       run: |
         cd scrapers
-        scrapy crawl linkedin
+        scrapy crawl linkedin -s LOG_FILE=linkedin.log
       continue-on-error: true
     
    
