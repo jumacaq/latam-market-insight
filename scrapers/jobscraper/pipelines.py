@@ -18,77 +18,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-#class CleaningPipeline:
-    #"""Clean and normalize raw scraped data"""
-    
-    #def process_item(self, item, spider):
-        # Clean title
-        #if item.get('title'):
-            #item['title'] = self.clean_text(item['title'])
-        
-        # Clean company name
-        #if item.get('company_name'):
-            #item['company_name'] = self.clean_text(item['company_name'])
-        
-        # Clean description
-        #if item.get('description'):
-            #item['description'] = self.clean_html(item['description'])
-        
-        # Normalize location
-        #if item.get('location'):
-            #item['country'] = self.extract_country(item['location'])
-        
-        # Add scraped timestamp
-        #item['scraped_at'] = datetime.now().isoformat()
-        
-        # Generate unique job_id if not provided
-        #if not item.get('job_id'):
-            #item['job_id'] = self.generate_job_id(item)
-        
-        #return item
-    
-    #@staticmethod
-    #def clean_text(text):
-        #"""Remove extra whitespace and special characters"""
-        #if not text:
-            #return ""
-        #text = re.sub(r'\s+', ' ', text)  # Multiple spaces to single
-        #text = text.strip()
-        #return text
-    
-    #@staticmethod
-    #def clean_html(html_text):
-        #"""Remove HTML tags"""
-        #if not html_text:
-            #return ""
-        #c#lean = re.sub(r'<[^>]+>', '', html_text)
-        #return CleaningPipeline.clean_text(clean)
-    
-    #@staticmethod
-    #def extract_country(location):
-       # """Extract country from location string"""
-        #countries = {
-            #'Mexico': ['mexico', 'cdmx', 'ciudad de mexico', 'guadalajara', 'monterrey'],
-            #'Colombia': ['colombia', 'bogota', 'medellin', 'cali'],
-            #'Argentina': ['argentina', 'buenos aires', 'cordoba', 'rosario'],
-            #'Chile': ['chile', 'santiago', 'valparaiso'],
-           # 'Peru': ['peru', 'lima', 'arequipa'],
-            #'Brazil': ['brazil', 'brasil', 'sao paulo', 'rio de janeiro'],
-            #'Ecuador': ['ecuador', 'quito', 'guayaquil'],
-        #}
-        
-        #location_lower = location.lower()
-        #for country, keywords in countries.items():
-            #if any(keyword in location_lower for keyword in keywords):
-                #return country
-        
-        #return None
-    
-    #@staticmethod
-    #def generate_job_id(item):
-       # """Generate unique ID from job attributes"""
-        #unique_string = f"{item.get('title', '')}{item.get('company_name', '')}{item.get('source_url', '')}"
-        #return hashlib.md5(unique_string.encode()).hexdigest()
 
 
 
@@ -117,8 +46,7 @@ class CleaningPipeline:
         item['scraped_at'] = datetime.now().isoformat()
 
         
-        #item["seniority_level"] = self.infer_seniority(
-            #item.get("requirements") or item.get("description")
+        
         #)
         # Estos campos viajan vacíos, el ETL en Pandas los llenará luego
         item['country'] = None
@@ -149,33 +77,9 @@ class CleaningPipeline:
         for junk in soup(["script", "style", "nav", "svg", "button", "header", "footer"]):
             junk.decompose()
         text = soup.get_text(separator=" ")
-        #text = re.sub(r"\s+", " ", text)
-        #return text.strip()
         return re.sub(r"\s+", " ", text).strip()
 
-    #@staticmethod
-    #def extract_country(location):
-        #"""Lightweight country detection (ETL will refine later)."""
-        #if not location:
-            #return None
-
-        #location_lower = location.lower()
-
-        #COUNTRY_MAP = {
-            #"mexico": "Mexico",
-            #"colombia": "Colombia",
-            #"argentina": "Argentina",
-            #"chile": "Chile",
-            #"peru": "Peru",
-            #"brazil": "Brazil",
-            #"ecuador": "Ecuador"
-        #}
-
-        #for key, country in COUNTRY_MAP.items():
-            #if key in location_lower:
-                #return country
-
-        #return None
+    
 
     @staticmethod
     def generate_job_id(item):
@@ -187,24 +91,7 @@ class CleaningPipeline:
             f"{item.get('location','')}"
         ).lower().strip()
         return hashlib.md5(base.encode()).hexdigest()
-    #@staticmethod
-    #def infer_seniority(text):
-        #if not text:
-            #return None
-
-        #t = text.lower()
-
-        #if any(k in t for k in ["sin experiencia", "junior", "practicante", "trainee"]):
-            #return "Junior"
-
-        #if any(k in t for k in ["2 años", "3 años", "mid", "intermedio"]):
-            #return "Mid"
-
-        #if any(k in t for k in ["5 años", "senior", "lead", "líder"]):
-            #return "Senior"
-
-        #return None
-
+    
 
 
 class SkillExtractionPipeline:
@@ -262,10 +149,33 @@ class SkillExtractionPipeline:
 class SectorClassificationPipeline:
     """Classify jobs into sectors based on keywords"""
     
+    
     SECTOR_KEYWORDS = {
-        'EdTech': ['education', 'learning', 'edtech', 'e-learning', 'training', 'course', 'student'],
-        'Fintech': ['fintech', 'financial', 'payment', 'banking', 'crypto', 'blockchain', 'trading'],
-        'Future of Work': ['remote', 'collaboration', 'productivity', 'automation', 'workspace']
+        'EdTech': [
+            'education', 'learning', 'edtech', 'e-learning', 'training', 'course', 
+            'student', 'school', 'university', 'curriculum', 'educación', 'aprendizaje', 'docente'
+        ],
+        'Fintech': [
+            'fintech', 'financial', 'payment', 'banking', 'crypto', 'blockchain', 
+            'trading', 'wallet', 'banco', 'finanzas', 'pagos', 'neobank', 'lending', 'tasa'
+        ],
+        'AI & Machine Learning': [
+            'ai', 'artificial intelligence', 'machine learning', 'deep learning', 'nlp', 
+            'llm', 'generative ai', 'ia', 'inteligencia artificial', 'openai', 'pytorch', 
+            'tensorflow', 'neural networks', 'data scientist', 'computer vision'
+       ],
+        'E-commerce': [
+            'ecommerce', 'e-commerce', 'retail', 'marketplace', 'shopify', 'magento', 
+            'comercio electrónico', 'ventas online', 'logistics', 'carrito de compras'
+        ],
+        'Cybersecurity': [
+            'cybersecurity', 'ciberseguridad', 'security', 'infosec', 'pentesting', 
+            'hacking', 'firewall', 'vulnerability', 'soc', 'seguridad informática'
+        ],
+        'Future of Work': [
+            'hrtech', 'remote work', 'collaboration tool', 'workplace digital', 
+            'talent management', 'recruitment tech'
+        ]
     }
     
     def process_item(self, item, spider):
@@ -324,23 +234,7 @@ class SupabasePipeline:
             # Prepare job data
             job_data = {k: v for k, v in dict(item).items() if k != 'skills'}
             self.client.table('jobs').upsert(job_data, on_conflict='job_id').execute()
-            #job_data = {
-                #'job_id': item.get('job_id'),
-                #'title': item.get('title'),
-                #'company_name': item.get('company_name'),
-                #'location': item.get('location'),
-                #'country': item.get('country'),
-                #'job_type': item.get('job_type'),
-                #'seniority_level': item.get('seniority_level'),
-                #'sector': item.get('sector'),
-                #'description': item.get('description'),
-                #'requirements': item.get('requirements'),
-                #'salary_range': item.get('salary_range'),
-                #'posted_date': item.get('posted_date'),
-                #'source_url': item.get('source_url'),
-                #'source_platform': item.get('source_platform'),
-                #'scraped_at': item.get('scraped_at')
-            #}
+            
             
            
             # Insert skills

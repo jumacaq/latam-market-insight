@@ -271,7 +271,12 @@ if not df_raw.empty:
                     y=platform_counts.values,
                     labels={'x': 'Plataforma', 'y': 'Cantidad'},
                     color=platform_counts.values,
-                    color_continuous_scale='Blues'
+                    color_continuous_scale='Viridis'
+                )
+                fig_platform.update_traces(
+                    marker_line_color='rgb(8,48,107)', # Borde azul oscuro
+                    marker_line_width=1.5,             # Grosor del borde
+                    opacity=0.85                       # Un poco de transparencia para elegancia
                 )
                 fig_platform.update_layout(showlegend=False)
                 st.plotly_chart(fig_platform, use_container_width=True)
@@ -290,6 +295,17 @@ if not df_raw.empty:
                 labels={'fecha': 'Fecha', 'count': 'Vacantes Scrapeadas'}
             )
             st.plotly_chart(fig_timeline, use_container_width=True)
+            
+            st.subheader("🏭 Distribución por Sector Económico")
+            sector_counts = df_filtered['sector'].value_counts()
+            fig_sector_total = px.bar(
+                sector_counts,
+                orientation='h',
+                labels={'value': 'Vacantes', 'index': 'Sector'},
+                color=sector_counts.values,
+                color_continuous_scale='Viridis'
+            )
+            st.plotly_chart(fig_sector_total, use_container_width=True)
         
         # ========================================
         # TAB 2: GEOGRAFÍA
