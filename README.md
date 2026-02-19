@@ -1,176 +1,179 @@
 # 📊 LatAm Tech Market Intelligence MVP
 Pipeline automatizado de Scraping y Análisis de Datos en tiempo real para el mercado laboral tecnológico en Latinoamérica.
 
-[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Automation-blue?logo=githubactions)](https://github.com/tu-usuario/tu-repo/actions)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red?logo=streamlit)]((https://latam-marketscraper-dashboard.streamlit.app/))
-[![Supabase](https://img.shields.io/badge/Supabase-Database-green?logo=supabase)](https://supabase.com)
+[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Automatización-blue?logo=githubactions)](https://github.com/tu-usuario/tu-repo/actions)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red?logo=streamlit)](https://latam-marketscraper-dashboard.streamlit.app/)
+[![Supabase](https://img.shields.io/badge/Supabase-Base_de_Datos-green?logo=supabase)](https://supabase.com)
 
 ---
 
-## 📋 Table of Contents
-1. [Project Overview](#project-overview)
-2. [Architecture](#architecture)
-3. [Prerequisites](#prerequisites)
-4. [Step-by-Step Setup](#setup)
-5. [Running the System](#running)
-6. [Deployment](#deployment)
-7. [Team Workflow](#team-workflow)
-8. [Troubleshooting](#troubleshooting)
+## 📋 Tabla de Contenidos
+1. [Descripción del Proyecto](#descripción-del-proyecto)
+2. [Arquitectura del Sistema](#arquitectura-del-sistema)
+3. [Estructura del Proyecto](#estructura-del-proyecto)
+4. [Pipeline de Datos e Inteligencia](#pipeline-de-datos-e-inteligencia)
+5. [Funcionalidades del Dashboard](#funcionalidades-del-dashboard)
+6. [Requisitos Previos](#requisitos-previos)
+7. [Instalación y Configuración](#instalación-y-configuración)
+8. [Ejecución del Sistema](#ejecución-del-sistema)
+9. [Despliegue](#despliegue)
+10. [Flujo de Trabajo del Equipo](#flujo-de-trabajo-del-equipo)
+11. [Solución de Problemas](#solución-de-problemas)
+12. [Métricas de Éxito](#métricas-de-éxito)
+13. [Recursos de Aprendizaje](#recursos-de-aprendizaje)
+14. [Próximos Pasos](#próximos-pasos)
 
 ---
 
-## 🎯 Objetivo del Proyecto
+## Descripción del Proyecto
+
 Este MVP proporciona una visión analítica del mercado laboral tech en LATAM. No solo recolecta vacantes, sino que analiza la transparencia salarial y la demanda por sectores específicos, ayudando a profesionales a tomar decisiones basadas en datos reales.
 
-## 🏗️ Arquitectura del Sistema
-1. **Extracción:** Spiders de Scrapy para Computrabajo y GetonBoard.
-2. **Orquestación:** Workflow en GitHub Actions programado diariamente a las 10:00 UTC.
-3. **Almacenamiento:** Base de datos relacional en Supabase con persistencia de logs.
-4. **Visualización:** Dashboard en Streamlit con métricas de calidad de datos y distribución geográfica.
+**Objetivo:** Procesar 500+ registros diarios con foco en México, Colombia, Argentina, Chile, Perú y Ecuador.
 
-## 📈 Dashboard Features
-- **Distribución por Sector:** Identificación inteligente de industrias (Fintech, EdTech, AI).
-- **Quality Score:** Análisis de completitud de datos por plataforma.
-- **Geolocalización:** Mapa de calor de vacantes por país.
-
-
-**Target**: 500+ processed records daily, focusing on Mexico, Colombia, Argentina, Chile, Peru, Ecuador .
-
-**Value Proposition**: Help job simulation participants understand market demands, emerging roles, and required skills.
+**Propuesta de Valor:** Ayudar a entender la demanda del mercado, roles emergentes y habilidades requeridas en el sector tecnológico latinoamericano.
 
 ---
 
-## 🏗️ Architecture
+## Arquitectura del Sistema
 
 ```
 ┌─────────────────────────────────────────────┐
-│     GitHub Actions (Daily 6 AM UTC)         │
-│          Automated Scheduling               │
+│     GitHub Actions (Diario 6 AM UTC)        │
+│          Automatización Programada          │
 └──────────────────┬──────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────┐
-│         Scrapy Spiders (3 sources)          │
+│         Scrapy Spiders (3 fuentes)          │
 │  • GetonBoard  • Torre API  • Computrabajo  │
 └──────────────────┬──────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────┐
-│          ETL Pipeline (4 stages)            │
-│  Clean → Extract Skills → Classify → Store │
+│          Pipeline ETL (4 etapas)            │
+│  Limpiar → Extraer Skills → Clasificar → Guardar │
 └──────────────────┬──────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────┐
 │        Supabase (PostgreSQL)                │
-│   Tables: jobs, companies, skills, trends   │
+│   Tablas: jobs, companies, skills, trends   │
 └──────────────────┬──────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────┐
-│    Streamlit Dashboard (Real-time)          │
-│  Visualizations, Reports, Data Export       │
+│    Streamlit Dashboard (Tiempo Real)        │
+│  Visualizaciones, Reportes, Exportación     │
 └─────────────────────────────────────────────┘
 ```
 
 ---
 
-## Estructura del proyecto
+## Estructura del Proyecto
 
 ```
 latam-job-intelligence/
 ├── .github/
 │   └── workflows/
-│       └── scrape_daily.yml          # GitHub Actions scheduler
+│       └── scrape_daily.yml          # Programador GitHub Actions
 ├── scrapers/
 │   ├── __init__.py
 │   ├── scrapy.cfg
 │   └── jobscraper/
 │       ├── __init__.py
-│       ├── settings.py               # Scrapy settings
-│       ├── items.py                  # Data models
-│       ├── pipelines.py              # ETL & DB insertion   
+│       ├── settings.py               # Configuración de Scrapy
+│       ├── items.py                  # Modelos de datos
+│       ├── pipelines.py              # ETL e inserción en BD
 │       └── spiders/
 │           ├── __init__.py
-│           ├── getonboard_spider.py  # GetonBoard scraper
-│           ├── computrabajo_spider.py # Computrabajo scraper
-|           └── linkedin_spider.py
-|   
+│           ├── getonboard_spider.py  # Scraper GetonBoard
+│           ├── computrabajo_spider.py # Scraper Computrabajo
+│           └── linkedin_spider.py    # Scraper LinkedIn
 ├── etl/
 │   ├── __init__.py
-│   ├── cleaning.py                   # Data cleaning functions
-│   └──  update_data.py                # Standardization
-│   
+│   ├── cleaning.py                   # Funciones de limpieza
+│   └── update_data.py                # Estandarización
 ├── database/
 │   ├── __init__.py
-│   ├── schema.sql                    # Database schema
-│   └── queries.py                    # Common queries
-|
+│   ├── schema.sql                    # Esquema de base de datos
+│   └── queries.py                    # Consultas frecuentes
 ├── config/
-│   └──  config.yaml                   # Configuration
-│
-├── app.py                            # Streamlit main app
-├── .env.example                      # Environment variables template
+│   └── config.yaml                   # Configuración general
+├── app.py                            # App principal de Streamlit
+├── .env.example                      # Plantilla de variables de entorno
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
-└── requirements_scraper.txt          # Main execution script
+└── requirements_scraper.txt
 ```
----
-
-## 🛠️ Data Pipeline & Intelligence
-El sistema procesa cada vacante a través de un pipeline de limpieza y clasificación:
-- **Limpieza (ETL):** Normalización de salarios, limpieza de HTML y manejo de duplicados.
-- **Clasificación por Sector:** Motor de reglas basado en keywords para categorizar vacantes en *Fintech, EdTech, AI & Machine Learning, etc.*
-- **Auditoría de Calidad:** Cálculo de un "Data Quality Score" basado en la completitud de la información (descripción, salario, requisitos).
 
 ---
 
-## 📦 Prerequisites
+## Pipeline de Datos e Inteligencia
 
-### Required Accounts (All Free!)
-1. **GitHub Account** - For code hosting and automation
-2. **Supabase Account** - Database (500MB free)
-3. **Streamlit Cloud Account** - Dashboard hosting
+El sistema procesa cada vacante a través de un pipeline de limpieza y clasificación de 4 etapas:
 
-### Local Development Requirements
-- Python 3.9 or higher
+- **Limpieza (ETL):** Normalización de salarios, eliminación de HTML y manejo de duplicados.
+- **Clasificación por Sector:** Motor de reglas basado en keywords para categorizar vacantes en *Fintech, EdTech, AI & Machine Learning*, entre otros.
+- **Extracción de Skills:** Identificación automática de tecnologías y habilidades requeridas por vacante.
+- **Auditoría de Calidad:** Cálculo de un *Data Quality Score* basado en la completitud de la información (descripción, salario, requisitos).
+
+---
+
+## Funcionalidades del Dashboard
+
+- **Distribución por Sector:** Identificación inteligente de industrias (Fintech, EdTech, IA).
+- **Quality Score:** Análisis de completitud de datos por plataforma.
+- **Geolocalización:** Mapa de calor de vacantes por país en LATAM.
+
+---
+
+## Requisitos Previos
+
+### Cuentas necesarias (¡todas gratuitas!)
+1. **GitHub** — Para alojar el código y automatizar la ejecución.
+2. **Supabase** — Base de datos PostgreSQL (500MB en plan gratuito).
+3. **Streamlit Cloud** — Hosting del dashboard.
+
+### Requisitos locales
+- Python 3.9 o superior
 - Git
-- Text editor (VS Code recommended)
-- Terminal/Command Line access
+- Editor de código (VS Code recomendado)
+- Acceso a terminal
 
 ---
 
-## 🚀 Step-by-Step Setup
+## Instalación y Configuración
 
-### Phase 1: Local Environment Setup (30 minutes)
+### Fase 1: Configuración del Entorno Local
 
-#### 1. Clone and Setup Project
+#### 1. Clonar y configurar el proyecto
 ```bash
-# Create project directory
+# Crear directorio del proyecto
 mkdir latam-job-intelligence
 cd latam-job-intelligence
 
-# Initialize git
+# Inicializar git
 git init
 
-# Create virtual environment
+# Crear entorno virtual
 python -m venv venv
 
-# Activate virtual environment
-# On Windows:
+# Activar entorno virtual
+# En Windows:
 venv\Scripts\activate
-# On Mac/Linux:
+# En Mac/Linux:
 source venv/bin/activate
 
-# Create project structure
+# Crear estructura de carpetas
 mkdir -p scrapers/jobscraper/spiders
 mkdir -p etl database analysis dashboard/pages config notebooks tests
 mkdir -p .github/workflows
 ```
 
-#### 2. Install Dependencies
-Create `requirements.txt`:
+#### 2. Instalar dependencias
+Crear `requirements.txt`:
 ```txt
 scrapy==2.11.0
 beautifulsoup4==4.12.2
@@ -187,25 +190,25 @@ fake-useragent==1.4.0
 python-dateutil==2.8.2
 ```
 
-Install:
+Instalar:
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 3. Create Environment Variables
-Create `.env` file:
+#### 3. Configurar variables de entorno
+Crear archivo `.env`:
 ```env
-SUPABASE_URL=your_supabase_url_here
-SUPABASE_KEY=your_supabase_anon_key_here
+SUPABASE_URL=tu_supabase_url_aqui
+SUPABASE_KEY=tu_supabase_anon_key_aqui
 ```
 
-Create `.env.example` (for team):
+Crear `.env.example` (para el equipo):
 ```env
 SUPABASE_URL=
 SUPABASE_KEY=
 ```
 
-#### 4. Create .gitignore
+#### 4. Crear `.gitignore`
 ```
 # Python
 __pycache__/
@@ -214,7 +217,7 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Environment
+# Variables de entorno
 .env
 
 # Scrapy
@@ -229,7 +232,7 @@ httpcache/
 *.log
 scraper.log
 
-# Data
+# Datos
 *.csv
 *.json
 data/
@@ -237,33 +240,30 @@ data/
 
 ---
 
-### Phase 2: Database Setup (15 minutes)
+### Fase 2: Configuración de la Base de Datos
 
-#### 1. Create Supabase Project
-1. Go to [https://supabase.com](https://supabase.com)
-2. Sign up with GitHub
-3. Click "New Project"
-4. Fill in:
+#### 1. Crear proyecto en Supabase
+1. Ir a [https://supabase.com](https://supabase.com) e iniciar sesión con GitHub.
+2. Hacer clic en **New Project** y completar:
    - **Name**: latam-job-intelligence
-   - **Database Password**: (save this securely!)
-   - **Region**: Choose closest to LatAm (US East recommended)
-5. Wait 2-3 minutes for project creation
+   - **Database Password**: (guardar en lugar seguro)
+   - **Region**: US East (más cercana a LATAM)
+3. Esperar 2-3 minutos hasta que el proyecto esté listo.
 
-#### 2. Run Database Schema
-1. In Supabase dashboard, go to **SQL Editor**
-2. Copy the schema from `database/schema.sql` (from the artifacts I created)
-3. Click **Run**
-4. Verify tables created: Go to **Table Editor**
+#### 2. Ejecutar el esquema de base de datos
+1. En el dashboard de Supabase, ir a **SQL Editor**.
+2. Copiar el contenido de `database/schema.sql` y ejecutarlo.
+3. Verificar que las tablas se hayan creado en **Table Editor**.
 
-#### 3. Get API Credentials
-1. Go to **Project Settings** → **API**
-2. Copy:
-   - **Project URL** (e.g., `https://xxxxx.supabase.co`)
-   - **anon public key** (long string starting with `eyJ...`)
-3. Add to your `.env` file
+#### 3. Obtener credenciales
+1. Ir a **Project Settings** → **API**.
+2. Copiar:
+   - **Project URL** (ej: `https://xxxxx.supabase.co`)
+   - **anon public key** (cadena larga que empieza con `eyJ...`)
+3. Agregar ambos valores al archivo `.env`.
 
-#### 4. Test Connection
-Create `test_connection.py`:
+#### 4. Probar la conexión
+Crear `test_connection.py`:
 ```python
 from supabase import create_client
 import os
@@ -277,317 +277,289 @@ key = os.getenv('SUPABASE_KEY')
 client = create_client(url, key)
 response = client.table('jobs').select('*').limit(1).execute()
 
-print("✅ Connection successful!" if response else "❌ Connection failed")
+print("✅ Conexión exitosa!" if response else "❌ Conexión fallida")
 ```
 
-Run:
+Ejecutar:
 ```bash
 python test_connection.py
 ```
 
 ---
 
-### Phase 3: Scrapy Configuration (20 minutes)
+### Fase 3: Configuración de Scrapy
 
-#### 1. Initialize Scrapy Project
+#### 1. Inicializar el proyecto Scrapy
 ```bash
 cd scrapers
 scrapy startproject jobscraper
 cd jobscraper
 ```
 
-#### 2. Add Files
-Copy the following files from the artifacts I created:
-- `items.py` - Data models
-- `pipelines.py` - ETL logic
-- `settings.py` - Scrapy configuration
+#### 2. Agregar los archivos del proyecto
+Asegurarse de que los siguientes archivos estén en su lugar:
+- `items.py` — Modelos de datos
+- `pipelines.py` — Lógica ETL
+- `settings.py` — Configuración de Scrapy
 - `spiders/getonboard_spider.py`
-- `spiders/torre_spider.py`
 - `spiders/computrabajo_spider.py`
+- `spiders/linkedin_spider.py`
 
-#### 3. Test a Spider
+#### 3. Probar un spider
 ```bash
-# Test GetonBoard spider (most reliable)
+# Probar spider de GetonBoard
 scrapy crawl getonboard -o test_output.json
 
-# Check output
+# Verificar resultado
 cat test_output.json
 ```
 
-Expected output: JSON array with job data
+Resultado esperado: array JSON con datos de vacantes.
 
 ---
 
-### Phase 4: Dashboard Setup (15 minutes)
+### Fase 4: Configuración del Dashboard
 
-#### 1. Create Dashboard Files
-Copy `dashboard/app.py` from artifacts.
-
-#### 2. Test Dashboard Locally
+#### 1. Probar el dashboard localmente
 ```bash
-streamlit run dashboard/app.py
+streamlit run app.py
 ```
 
-Opens browser at `http://localhost:8501`
+Se abrirá el navegador en `http://localhost:8501`.
 
-**Expected**: Dashboard loads (may show "no data" if scrapers haven't run yet)
+> **Nota:** El dashboard puede mostrar "sin datos" si los scrapers aún no han corrido.
 
 ---
 
-### Phase 5: Automation Setup (20 minutes)
+### Fase 5: Configuración de la Automatización
 
-#### 1. Create GitHub Actions Workflow
-Copy `.github/workflows/scrape_daily.yml` from artifacts.
+#### 1. Verificar el workflow de GitHub Actions
+El archivo `.github/workflows/scrape_daily.yml` ya contiene la programación diaria a las 6:00 AM UTC.
 
-#### 2. Add Orchestrator Script
-Copy `run_scraper.py` to project root.
-
-#### 3. Test Locally
+#### 2. Probar la ejecución localmente
 ```bash
 python run_scraper.py
 ```
 
-This should run all three scrapers sequentially.
+Esto ejecutará los tres scrapers de forma secuencial.
 
 ---
 
-## 🎮 Running the System
+## Ejecución del Sistema
 
-### Local Development
+### Desarrollo Local
 
-#### Run Single Spider
+#### Ejecutar un spider individual
 ```bash
 cd scrapers/jobscraper
 scrapy crawl getonboard
 ```
 
-#### Run All Scrapers
+#### Ejecutar todos los scrapers
 ```bash
 python run_scraper.py
 ```
 
-#### Generate Report
+#### Generar reporte
 ```bash
 python analysis/report_generator.py
 ```
 
-#### Start Dashboard
+#### Iniciar el dashboard
 ```bash
-streamlit run dashboard/app.py
+streamlit run app.py
 ```
 
 ---
 
-## 🚀 Deployment (All Free!)
+## Despliegue
 
-### 1. Deploy to GitHub
+### 1. Subir el proyecto a GitHub
 
 ```bash
-# Initialize git (if not done)
-git init
-
-# Add all files
 git add .
-
-# Commit
 git commit -m "Initial commit: LatAm Job Intelligence MVP"
-
-# Create GitHub repo (via GitHub website)
-# Then push:
-git remote add origin https://github.com/YOUR-USERNAME/latam-job-intelligence.git
+git remote add origin https://github.com/TU-USUARIO/latam-job-intelligence.git
 git push -u origin main
 ```
 
-### 2. Configure GitHub Secrets
+### 2. Configurar secretos en GitHub
 
-1. Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
-2. Add secrets:
-   - `SUPABASE_URL`: Your Supabase project URL
-   - `SUPABASE_KEY`: Your Supabase anon key
-
-### 3. Enable GitHub Actions
-
-1. Go to **Actions** tab
-2. You should see "Daily Job Scraping" workflow
-3. Click **Enable workflow**
-4. Optionally, click **Run workflow** to test immediately
-
-**Schedule**: Runs automatically every day at 6 AM UTC (1-3 AM LatAm time)
-
-### 4. Deploy Dashboard to Streamlit Cloud
-
-1. Go to [https://streamlit.io/cloud](https://streamlit.io/cloud)
-2. Sign in with GitHub
-3. Click **New app**
-4. Select:
-   - **Repository**: your-username/latam-job-intelligence
-   - **Branch**: main
-   - **Main file**: dashboard/app.py
-5. Click **Advanced settings** → Add secrets:
+1. Ir al repositorio → **Settings** → **Secrets and variables** → **Actions**.
+2. Agregar los siguientes secretos:
    - `SUPABASE_URL`
    - `SUPABASE_KEY`
-6. Click **Deploy**
 
-**Result**: Your dashboard is live at `https://your-app.streamlit.app`
+### 3. Activar GitHub Actions
 
----
+1. Ir a la pestaña **Actions** del repositorio.
+2. Verificar que el workflow **Daily Job Scraping** esté visible.
+3. Hacer clic en **Enable workflow**.
+4. Opcionalmente, ejecutar manualmente con **Run workflow** para una prueba inmediata.
 
-## 👥 Team Workflow
+> **Programación:** Se ejecuta automáticamente todos los días a las 6:00 AM UTC (1-3 AM hora LATAM).
 
-### Daily Operations
+### 4. Desplegar el Dashboard en Streamlit Cloud
 
-1. **Automated Scraping**: Runs daily via GitHub Actions
-2. **Data Updates**: Automatically flows to Supabase
-3. **Dashboard**: Auto-updates (refresh browser)
-4. **Monitoring**: Check GitHub Actions logs
+1. Ir a [https://streamlit.io/cloud](https://streamlit.io/cloud) e iniciar sesión con GitHub.
+2. Hacer clic en **New app** y seleccionar:
+   - **Repository**: tu-usuario/latam-job-intelligence
+   - **Branch**: main
+   - **Main file**: app.py
+3. En **Advanced settings**, agregar los secretos `SUPABASE_URL` y `SUPABASE_KEY`.
+4. Hacer clic en **Deploy**.
 
-### Team Roles
-
-#### Developer 1: Spiders & ETL
-- Maintain spider code
-- Fix broken scrapers
-- Add new data sources
-- Improve extraction logic
-
-#### Developer 2: Data & Analysis
-- Monitor data quality
-- Create analysis notebooks
-- Generate insights
-- Update trend algorithms
-
-#### Developer 3: Dashboard & Reporting
-- Improve visualizations
-- Add new dashboard features
-- Generate weekly reports
-- User experience improvements
-
-### Weekly Tasks
-
-**Monday**:
-- Review weekend scraping logs
-- Check data quality metrics
-- Plan weekly improvements
-
-**Wednesday**:
-- Mid-week data analysis
-- Test new features locally
-- Update documentation
-
-**Friday**:
-- Deploy improvements
-- Generate weekly report
-- Team knowledge sharing session
+**Resultado:** El dashboard quedará disponible en `https://tu-app.streamlit.app`.
 
 ---
 
-## 🔧 Troubleshooting
+## Flujo de Trabajo del Equipo
 
-### Common Issues
+### Operaciones Diarias
 
-#### 1. Scrapers Failing
+1. **Scraping automatizado:** Se ejecuta diariamente vía GitHub Actions.
+2. **Actualización de datos:** Fluye automáticamente hacia Supabase.
+3. **Dashboard:** Se actualiza al refrescar el navegador.
+4. **Monitoreo:** Revisar logs en la pestaña Actions de GitHub.
+
+### Roles del Equipo
+
+#### Desarrollador 1 — Spiders y ETL
+- Mantener el código de los scrapers.
+- Corregir scrapers que fallen.
+- Agregar nuevas fuentes de datos.
+- Mejorar la lógica de extracción.
+
+#### Desarrollador 2 — Datos y Análisis
+- Monitorear la calidad de los datos.
+- Crear notebooks de análisis.
+- Generar insights del mercado.
+- Actualizar algoritmos de tendencias.
+
+#### Desarrollador 3 — Dashboard y Reportes
+- Mejorar las visualizaciones.
+- Agregar nuevas funcionalidades al dashboard.
+- Generar reportes semanales.
+- Mejorar la experiencia de usuario.
+
+### Rutina Semanal
+
+**Lunes:** Revisar logs del fin de semana, verificar métricas de calidad y planificar mejoras de la semana.
+
+**Miércoles:** Análisis de datos a mitad de semana, prueba de nuevas funcionalidades en local y actualización de documentación.
+
+**Viernes:** Despliegue de mejoras, generación del reporte semanal y sesión de conocimiento compartido del equipo.
+
+---
+
+## Solución de Problemas
+
+### Scrapers con errores
 ```bash
-# Check logs
+# Revisar logs
 cat scraper.log
 
-# Test single spider with verbose mode
+# Probar spider en modo detallado
 scrapy crawl getonboard -L DEBUG
 
-# Check if site structure changed
+# Inspeccionar la estructura del sitio
 scrapy shell "https://www.getonbrd.com/jobs"
 ```
 
-**Solution**: Update CSS selectors in spider code.
+**Solución:** Actualizar los selectores CSS en el código del spider si la estructura del sitio cambió.
 
-#### 2. Database Connection Errors
-```python
-# Test connection
+---
+
+### Error de conexión a la base de datos
+```bash
+# Probar conexión
 python test_connection.py
 
-# Check credentials
+# Verificar credenciales
 cat .env
 ```
 
-**Solution**: Verify Supabase URL and key are correct.
+**Solución:** Confirmar que la URL y la clave de Supabase sean correctas.
 
-#### 3. GitHub Actions Failing
-1. Go to **Actions** tab
-2. Click failed workflow
-3. Check error logs
-4. Common fixes:
-   - Verify secrets are set correctly
-   - Check requirements.txt is complete
-   - Ensure scrapy project structure is correct
+---
 
-#### 4. Dashboard Not Showing Data
+### GitHub Actions con errores
+1. Ir a la pestaña **Actions** y hacer clic en el workflow fallido.
+2. Revisar los logs del error.
+3. Causas más comunes:
+   - Los secretos no están configurados correctamente.
+   - El `requirements.txt` está incompleto.
+   - La estructura del proyecto Scrapy tiene inconsistencias.
+
+---
+
+### Dashboard sin datos
 ```bash
-# Check if data exists in Supabase
-# Go to Supabase → Table Editor → jobs table
+# Verificar datos en Supabase
+# Ir a Supabase → Table Editor → tabla jobs
 
-# Test locally
-streamlit run dashboard/app.py
+# Probar localmente
+streamlit run app.py
 ```
 
-**Solution**: Run scrapers first if no data exists.
+**Solución:** Ejecutar los scrapers primero si la tabla aún no tiene datos.
 
 ---
 
-## 📊 Success Metrics
+## Métricas de Éxito
 
-Track these to verify MVP success:
-
-- ✅ **500+ jobs** scraped weekly
-- ✅ **3+ countries** covered
-- ✅ **3+ sectors** (EdTech, Fintech, Future of Work)
-- ✅ **50+ skills** extracted
-- ✅ **95%+ uptime** on GitHub Actions
-- ✅ **Daily dashboard updates**
-
----
-
-## 🎓 Learning Resources
-
-### For Team Members
-
-**Scrapy**:
-- [Official Docs](https://docs.scrapy.org/)
-- [Scrapy Tutorial](https://docs.scrapy.org/en/latest/intro/tutorial.html)
-
-**Supabase**:
-- [Quickstart](https://supabase.com/docs/guides/getting-started)
-- [Python Client](https://supabase.com/docs/reference/python/introduction)
-
-**Streamlit**:
-- [Get Started](https://docs.streamlit.io/library/get-started)
-- [Dashboard Examples](https://streamlit.io/gallery)
+| Métrica | Objetivo |
+|---|---|
+| Vacantes procesadas | 500+ por semana |
+| Países cubiertos | 3+ (MX, CO, AR, CL, PE, EC) |
+| Sectores clasificados | 3+ (EdTech, Fintech, IA) |
+| Skills extraídas | 50+ |
+| Uptime GitHub Actions | 95%+ |
+| Frecuencia de actualización | Diaria |
 
 ---
 
-## 🚦 Next Steps After MVP
+## Recursos de Aprendizaje
 
-### Phase 2 (Optional Enhancements)
-1. Add email notifications for daily reports
-2. Implement salary prediction ML model
-3. Add more job boards (LinkedIn API alternatives)
-4. Create mobile-responsive dashboard
-5. Add user authentication for personalized insights
-6. Implement job matching algorithm
+**Scrapy**
+- [Documentación oficial](https://docs.scrapy.org/)
+- [Tutorial introductorio](https://docs.scrapy.org/en/latest/intro/tutorial.html)
 
----
+**Supabase**
+- [Guía de inicio rápido](https://supabase.com/docs/guides/getting-started)
+- [Cliente Python](https://supabase.com/docs/reference/python/introduction)
 
-## 📞 Support
-
-**Issues**: Create GitHub issue in repository  
-**Questions**: Team Slack channel  
-**Documentation**: Check `docs/` folder
+**Streamlit**
+- [Primeros pasos](https://docs.streamlit.io/library/get-started)
+- [Galería de ejemplos](https://streamlit.io/gallery)
 
 ---
 
-## 📄 License
+## Próximos Pasos
 
-This project is for educational purposes as part of job simulation training.
+1. Agregar notificaciones por email con reportes diarios automáticos.
+2. Implementar modelo de ML para predicción de salarios.
+3. Integrar fuentes adicionales de empleo (alternativas a LinkedIn API).
+4. Crear dashboard responsive para móviles.
+5. Agregar autenticación de usuarios para insights personalizados.
+6. Implementar algoritmo de matching entre perfiles y vacantes.
 
 ---
 
-**Built with ❤️ for LatAm Tech Talent**
+## 📞 Soporte
 
-Last updated: November 2025
+- **Issues:** Crear un issue en el repositorio de GitHub.
+- **Preguntas:** Canal de Slack del equipo.
+- **Documentación adicional:** Carpeta `docs/` del repositorio.
+
+---
+
+## 📄 Licencia
+
+Este proyecto fue desarrollado con fines educativos como parte de una simulación laboral en tecnología.
+
+---
+
+**Construido con ❤️ para el Talento Tech de LATAM**
+
+*Última actualización: Febrero 2026*
