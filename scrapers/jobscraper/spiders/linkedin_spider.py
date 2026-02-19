@@ -125,11 +125,11 @@ class LinkedInSpider(scrapy.Spider):
                 item['company_name'] = company
                 item['source_url'] = url
                 item['location'] = location
-                item['sector'] = response.meta['keyword']
+                item['sector'] = None
                 item['posted_date'] = posted_date
                 item['source_platform'] = 'LinkedIn'
                 
-                #item['description'] = f"Vacante: {title} en {company}. Ubicación: {location}."
+                
                 # Asegúrate de capturar el HTML crudo para que nuestro CleaningPipeline haga su magia
                 desc_html = response.css('section.show-more-less-html__node').get() or \
                             response.css('div.description__text').get() or \

@@ -153,31 +153,48 @@ class SectorClassificationPipeline:
     SECTOR_KEYWORDS = {
         'EdTech': [
             'education', 'learning', 'edtech', 'e-learning', 'training', 'course', 
-            'student', 'school', 'university', 'curriculum', 'educación', 'aprendizaje', 'docente'
+            'student', 'school', 'university', 'educación', 'aprendizaje', 'docente',
+            'k-12', 'mooc', 'bootcamp', 'lms', 'canvas', 'moodle', 'blackboard', 
+            'academia', 'pedagogía', 'instruccional', 'capacitación', 'tutor'
         ],
         'Fintech': [
-            'fintech', 'financial', 'payment', 'banking', 'crypto', 'blockchain', 
-            'trading', 'wallet', 'banco', 'finanzas', 'pagos', 'neobank', 'lending', 'tasa'
+            'fintech', 'financial', 'payment', 'banking', 'crypto', 'blockchain', 'bank',
+            'trading', 'wallet', 'banco', 'finanzas', 'pagos', 'neobank', 'lending', 'tasa',
+            'remesas', 'wealthtech', 'insurtech', 'cooperativa', 'crédito', 'inversión',
+            'divisas', 'pasmarela', 'stripe', 'mercadopago', 'bitcoin', 'ether', 'defi'
         ],
         'AI & Machine Learning': [
             'ai', 'artificial intelligence', 'machine learning', 'deep learning', 'nlp', 
             'llm', 'generative ai', 'ia', 'inteligencia artificial', 'openai', 'pytorch', 
-            'tensorflow', 'neural networks', 'data scientist', 'computer vision'
-       ],
+            'tensorflow', 'neural networks', 'data scientist', 'computer vision',
+            'mlops', 'langchain', 'huggingface', 'genai', 'predictive', 'modelado',
+            'algoritmos', 'chatgpt', 'llama', 'anthropic', 'data science'
+        ],
         'E-commerce': [
             'ecommerce', 'e-commerce', 'retail', 'marketplace', 'shopify', 'magento', 
-            'comercio electrónico', 'ventas online', 'logistics', 'carrito de compras'
+            'comercio electrónico', 'ventas online', 'logistics', 'carrito de compras',
+            'b2c', 'b2b', 'dropshipping', 'vtex', 'woocommerce', 'pos', 'pasarela de pagos',
+            'catálogo', 'inventario', 'shipping', 'last mile', 'minorista'
         ],
         'Cybersecurity': [
             'cybersecurity', 'ciberseguridad', 'security', 'infosec', 'pentesting', 
-            'hacking', 'firewall', 'vulnerability', 'soc', 'seguridad informática'
+            'hacking', 'firewall', 'vulnerability', 'soc', 'seguridad informática',
+            'siem', 'iam', 'zero trust', 'encriptación', 'malware', 'antivirus', 
+            'threat intelligence', 'iso 27001', 'forensic', 'red team', 'blue team'
         ],
         'Future of Work': [
             'hrtech', 'remote work', 'collaboration tool', 'workplace digital', 
-            'talent management', 'recruitment tech'
-        ]
+            'talent management', 'recruitment tech', 'nomad', 'asynchronous', 
+            'coworking', 'human resources', 'recursos humanos', 'applicant tracking',
+            'ats', 'gig economy', 'freelance', 'staffing'
+        ],
+        'HealthTech': [
+            'healthtech', 'salud', 'medical', 'hospital', 'pharma', 'biotech', 
+            'telemedicina', 'farma', 'medicina', 'biotecnología', 'clínica', 
+            'paciente', 'historia clínica', 'digital health', 'e-health', 'wellness',
+            'fitness', 'biomédica', 'laboratorio', 'diagnóstico'
+        ],
     }
-    
     def process_item(self, item, spider):
         if not item.get('sector'):
             item['sector'] = self.classify_sector(item)
@@ -191,9 +208,23 @@ class SectorClassificationPipeline:
             str(item.get('company_name') or '')
         ).lower()
         
+        # Sistema de puntuación para mayor precisión
+        scores = {sector: 0 for sector in self.SECTOR_KEYWORDS.keys()}
+        
         for sector, keywords in self.SECTOR_KEYWORDS.items():
-            if any(keyword in text for keyword in keywords):
-                return sector
+            for keyword in keywords:
+                # Usamos expresiones regulares para buscar la palabra exacta (\b)
+                # Esto evita que 'ia' coincida con 'ingenieria'
+                pattern = rf'\b{re.escape(keyword.lower())}\b'
+                matches = re.findall(pattern, text)
+                scores[sector] += len(matches)
+        
+        # Encontrar el sector con la puntuación más alta
+        if any(scores.values()):
+            best_sector = max(scores, key=scores.get)
+            # Solo retornamos si el sector ganador tiene al menos una coincidencia clara
+            if scores[best_sector] > 0:
+                return best_sector
         
         return 'Other'
 
@@ -217,13 +248,11 @@ class SupabasePipeline:
         self.client = create_client(
             supabase_url,
             supabase_service_key,
-            #options={'http_client': http_client}
+            
         )
 
         spider.logger.info("Connected to Supabase ")
-        #self.client = create_client(supabase_url, supabase_service_key)
-        #spider.logger.info("Connected to Supabase")
-    
+        
     def process_item(self, item, spider):
         """Insert or update job in database"""
         if not self.client:
@@ -251,14 +280,7 @@ class SupabasePipeline:
                     skill_rows,
                     on_conflict="job_id,skill_name"
                 ).execute()
-                #job_id = item.get('job_id')
-                #for skill in item['skills']:
-                    #skill_data = {
-                        #'job_id': job_id,
-                        #'skill_name': skill,
-                        #'skill_category': self.categorize_skill(skill)
-                    #}
-                    #self.client.table('skills').insert(skill_data).execute()
+                
             
             spider.logger.info(f"Saved job: {item.get('title')} at {item.get('company_name')}")
             

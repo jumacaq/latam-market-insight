@@ -1,5 +1,11 @@
-# LatAm_Market_Scraper
-# 🌎 LatAm Job Market Intelligence - MVP Setup Guide
+# 📊 LatAm Tech Market Intelligence MVP
+Pipeline automatizado de Scraping y Análisis de Datos en tiempo real para el mercado laboral tecnológico en Latinoamérica.
+
+[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Automation-blue?logo=githubactions)](https://github.com/tu-usuario/tu-repo/actions)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red?logo=streamlit)]((https://latam-marketscraper-dashboard.streamlit.app/))
+[![Supabase](https://img.shields.io/badge/Supabase-Database-green?logo=supabase)](https://supabase.com)
+
+---
 
 ## 📋 Table of Contents
 1. [Project Overview](#project-overview)
@@ -13,11 +19,22 @@
 
 ---
 
-## 🎯 Project Overview
+## 🎯 Objetivo del Proyecto
+Este MVP proporciona una visión analítica del mercado laboral tech en LATAM. No solo recolecta vacantes, sino que analiza la transparencia salarial y la demanda por sectores específicos, ayudando a profesionales a tomar decisiones basadas en datos reales.
 
-**Goal**: Build an intelligent scraping system to collect and analyze job market data from LatAm tech sectors (EdTech, Fintech, Future of Work).
+## 🏗️ Arquitectura del Sistema
+1. **Extracción:** Spiders de Scrapy para Computrabajo y GetonBoard.
+2. **Orquestación:** Workflow en GitHub Actions programado diariamente a las 10:00 UTC.
+3. **Almacenamiento:** Base de datos relacional en Supabase con persistencia de logs.
+4. **Visualización:** Dashboard en Streamlit con métricas de calidad de datos y distribución geográfica.
 
-**Target**: 500+ processed records daily, focusing on Mexico, Colombia, Argentina, Chile, Peru, and Brazil.
+## 📈 Dashboard Features
+- **Distribución por Sector:** Identificación inteligente de industrias (Fintech, EdTech, AI).
+- **Quality Score:** Análisis de completitud de datos por plataforma.
+- **Geolocalización:** Mapa de calor de vacantes por país.
+
+
+**Target**: 500+ processed records daily, focusing on Mexico, Colombia, Argentina, Chile, Peru, Ecuador .
 
 **Value Proposition**: Help job simulation participants understand market demands, emerging roles, and required skills.
 
@@ -58,7 +75,7 @@
 
 ---
 
-## Project Structure
+## Estructura del proyecto
 
 ```
 latam-job-intelligence/
@@ -68,53 +85,44 @@ latam-job-intelligence/
 ├── scrapers/
 │   ├── __init__.py
 │   ├── scrapy.cfg
-│   ├── jobscraper/
-│   │   ├── __init__.py
-│   │   ├── settings.py               # Scrapy settings
-│   │   ├── items.py                  # Data models
-│   │   ├── pipelines.py              # ETL & DB insertion
-│   │   ├── middlewares.py            # User agents, delays
-│   │   └── spiders/
-│   │       ├── __init__.py
-│   │       ├── getonboard_spider.py  # GetonBoard scraper
-│   │       ├── computrabajo_spider.py # Computrabajo scraper
-│   │       └── torre_spider.py       # Torre API integration
+│   └── jobscraper/
+│       ├── __init__.py
+│       ├── settings.py               # Scrapy settings
+│       ├── items.py                  # Data models
+│       ├── pipelines.py              # ETL & DB insertion   
+│       └── spiders/
+│           ├── __init__.py
+│           ├── getonboard_spider.py  # GetonBoard scraper
+│           ├── computrabajo_spider.py # Computrabajo scraper
+|           └── linkedin_spider.py
+|   
 ├── etl/
 │   ├── __init__.py
-│   ├── cleaners.py                   # Data cleaning functions
-│   ├── normalizers.py                # Standardization
-│   └── skill_extractor.py            # Extract tech skills from descriptions
+│   ├── cleaning.py                   # Data cleaning functions
+│   └──  update_data.py                # Standardization
+│   
 ├── database/
 │   ├── __init__.py
-│   ├── supabase_client.py            # Supabase connection
 │   ├── schema.sql                    # Database schema
 │   └── queries.py                    # Common queries
-├── analysis/
-│   ├── __init__.py
-│   ├── trend_analyzer.py             # Detect growing roles/skills
-│   └── report_generator.py           # Generate insights
-├── dashboard/
-│   ├── app.py                        # Streamlit main app
-│   ├── pages/
-│   │   ├── 1_📊_Trends.py
-│   │   ├── 2_🏢_Companies.py
-│   │   └── 3_💡_Skills.py
-│   └── utils.py                      # Dashboard utilities
+|
 ├── config/
-│   ├── config.yaml                   # Configuration
-│   ├── keywords.json                 # Search keywords by sector
-│   └── countries.json                # LatAm countries focus
-├── notebooks/
-│   └── exploratory_analysis.ipynb    # Data exploration
-├── tests/
-│   ├── test_spiders.py
-│   └── test_etl.py
+│   └──  config.yaml                   # Configuration
+│
+├── app.py                            # Streamlit main app
 ├── .env.example                      # Environment variables template
 ├── .gitignore
-├── requirements.txt
 ├── README.md
-└── run_scraper.py                    # Main execution script
+├── requirements.txt
+└── requirements_scraper.txt          # Main execution script
 ```
+---
+
+## 🛠️ Data Pipeline & Intelligence
+El sistema procesa cada vacante a través de un pipeline de limpieza y clasificación:
+- **Limpieza (ETL):** Normalización de salarios, limpieza de HTML y manejo de duplicados.
+- **Clasificación por Sector:** Motor de reglas basado en keywords para categorizar vacantes en *Fintech, EdTech, AI & Machine Learning, etc.*
+- **Auditoría de Calidad:** Cálculo de un "Data Quality Score" basado en la completitud de la información (descripción, salario, requisitos).
 
 ---
 
