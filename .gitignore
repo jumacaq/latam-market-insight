@@ -31,7 +31,6 @@ scraper.log
 # Data
 *.csv
 *.json
-data/
 
 # OS
 .DS_Store
@@ -39,4 +38,4 @@ Thumbs.db
 analysis/
 scrapers/jobscraper_temp_backup/
 =3.5.4
-
+README_old.md
