@@ -1,4 +1,4 @@
-# 📊 LatAm Tech Market Intelligence MVP
+# 📊 LatAm Tech Job Market Intelligence MVP
 Pipeline automatizado de Scraping y Análisis de Datos en tiempo real para el mercado laboral tecnológico en Latinoamérica.
 
 [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Automatización-blue?logo=githubactions)](https://github.com/tu-usuario/tu-repo/actions)
@@ -17,11 +17,9 @@ Pipeline automatizado de Scraping y Análisis de Datos en tiempo real para el me
 7. [Instalación y Configuración](#instalación-y-configuración)
 8. [Ejecución del Sistema](#ejecución-del-sistema)
 9. [Despliegue](#despliegue)
-10. [Flujo de Trabajo del Equipo](#flujo-de-trabajo-del-equipo)
-11. [Solución de Problemas](#solución-de-problemas)
-12. [Métricas de Éxito](#métricas-de-éxito)
-13. [Recursos de Aprendizaje](#recursos-de-aprendizaje)
-14. [Próximos Pasos](#próximos-pasos)
+10. [Solución de Problemas](#solución-de-problemas)
+11. [Métricas de Éxito](#métricas-de-éxito)
+12. [Próximos Pasos](#próximos-pasos)
 
 ---
 
@@ -38,34 +36,38 @@ Este MVP proporciona una visión analítica del mercado laboral tech en LATAM. N
 ## Arquitectura del Sistema
 
 ```
-┌─────────────────────────────────────────────┐
-│     GitHub Actions (Diario 6 AM UTC)        │
-│          Automatización Programada          │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────┐
-│         Scrapy Spiders (3 fuentes)          │
-│  • GetonBoard  • Torre API  • Computrabajo  │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────┐
-│          Pipeline ETL (4 etapas)            │
-│  Limpiar → Extraer Skills → Clasificar → Guardar │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────┐
-│        Supabase (PostgreSQL)                │
-│   Tablas: jobs, companies, skills, trends   │
-└──────────────────┬──────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────┐
-│    Streamlit Dashboard (Tiempo Real)        │
-│  Visualizaciones, Reportes, Exportación     │
-└─────────────────────────────────────────────┘
+graph TD
+    subgraph Fuentes_Externas [Fuentes de Datos]
+        A1[LinkedIn]
+        A2[Computrabajo]
+        A3[GetonBoard]
+    end
+
+    subgraph Orquestacion [Automatización & ETL]
+        B1[GitHub Actions]
+        B2[Scrapy Spiders]
+        B3[Pipeline de Clasificación]
+        B4[Script update_data.py]
+    end
+
+    subgraph Almacenamiento [Cloud Database]
+        C1[(Supabase / PostgreSQL)]
+    end
+
+    subgraph Visualizacion [Frontend]
+        D1[Streamlit Dashboard]
+        D2[Plotly Interactive Charts]
+    end
+
+    %% Flujos
+    A1 & A2 & A3 --> B2
+    B1 -->|Trigger Diario| B2
+    B2 -->|Item Raw| B3
+    B3 -->|Item Categorizado| C1
+    C1 -->|Fetch Data| B4
+    B4 -->|Clean & Update| C1
+    C1 -.->|Real-time Sync| D1
+    D1 --> D2
 ```
 
 ---
@@ -73,7 +75,7 @@ Este MVP proporciona una visión analítica del mercado laboral tech en LATAM. N
 ## Estructura del Proyecto
 
 ```
-latam-job-intelligence/
+latam-tech-job-market-intelligence/
 ├── .github/
 │   └── workflows/
 │       └── scrape_daily.yml          # Programador GitHub Actions
@@ -104,8 +106,9 @@ latam-job-intelligence/
 ├── .env.example                      # Plantilla de variables de entorno
 ├── .gitignore
 ├── README.md
-├── requirements.txt
-└── requirements_scraper.txt
+├── requirements.txt                  # Librerías para ejecutar la interfaz de usuario
+├── requirements_scraper.txt          # Dependencias para la extracción y procesamiento de datos.
+└── test_conection.py                 # Script para testear conexión a Supabase
 ```
 
 ---
@@ -123,7 +126,7 @@ El sistema procesa cada vacante a través de un pipeline de limpieza y clasifica
 
 ## Funcionalidades del Dashboard
 
-- **Distribución por Sector:** Identificación inteligente de industrias (Fintech, EdTech, IA).
+- **Distribución por Sector:** Identificación inteligente de industrias (Fintech, EdTech, IA, E-commerce, HealthTech, Cibersecurity).
 - **Quality Score:** Análisis de completitud de datos por plataforma.
 - **Geolocalización:** Mapa de calor de vacantes por país en LATAM.
 
@@ -151,49 +154,52 @@ El sistema procesa cada vacante a través de un pipeline de limpieza y clasifica
 #### 1. Clonar y configurar el proyecto
 ```bash
 # Crear directorio del proyecto
-mkdir latam-job-intelligence
-cd latam-job-intelligence
+mkdir latam-tech-job-market-intelligence
+cd latam-tech-job-market-intelligence
 
 # Inicializar git
 git init
 
 # Crear entorno virtual
-python -m venv venv
+python -m .venv venv
 
 # Activar entorno virtual
 # En Windows:
-venv\Scripts\activate
+.venv\Scripts\activate
 # En Mac/Linux:
-source venv/bin/activate
+source .venv/bin/activate
 
 # Crear estructura de carpetas
 mkdir -p scrapers/jobscraper/spiders
-mkdir -p etl database analysis dashboard/pages config notebooks tests
+mkdir -p etl database config 
 mkdir -p .github/workflows
 ```
 
 #### 2. Instalar dependencias
-Crear `requirements.txt`:
-```txt
-scrapy==2.11.0
-beautifulsoup4==4.12.2
-selenium==4.15.2
-requests==2.31.0
-supabase==2.3.0
-python-dotenv==1.0.0
-pandas==2.1.4
-numpy==1.26.2
-plotly==5.18.0
-streamlit==1.29.0
-pyyaml==6.0.1
-fake-useragent==1.4.0
-python-dateutil==2.8.2
-```
+El proyecto utiliza una estructura de requerimientos dividida para optimizar el despliegue en diferentes entornos (Scrapers en GitHub Actions y Dashboard en Streamlit Cloud).
 
-Instalar:
+1. requirements.txt (Entorno del Dashboard)
+Este archivo contiene las librerías necesarias para ejecutar la interfaz de usuario y la visualización de datos. Es el que utiliza Streamlit Cloud para desplegar la aplicación.
+
+Librerías clave: streamlit, plotly, pandas, supabase.
+
+Uso: 
 ```bash
 pip install -r requirements.txt
 ```
+
+2. requirements_scraper.txt (Entorno del Pipeline ETL)
+Contiene las dependencias críticas para la extracción y procesamiento de datos. Está diseñado para ser ligero y evitar conflictos de versiones durante la automatización en GitHub Actions.
+
+Librerías clave: scrapy, supabase==2.11.0, gotrue==2.11.0, python-dotenv.
+
+Nota técnica: Se han fijado versiones específicas de supabase y gotrue para garantizar la compatibilidad con entornos de servidor y evitar errores de handshake/proxy.
+
+Uso: 
+```bash
+pip install -r requirements_scraper.txt
+```
+
 
 #### 3. Configurar variables de entorno
 Crear archivo `.env`:
@@ -245,7 +251,7 @@ data/
 #### 1. Crear proyecto en Supabase
 1. Ir a [https://supabase.com](https://supabase.com) e iniciar sesión con GitHub.
 2. Hacer clic en **New Project** y completar:
-   - **Name**: latam-job-intelligence
+   - **Name**: latam-tech-job-market-intelligence
    - **Database Password**: (guardar en lugar seguro)
    - **Region**: US East (más cercana a LATAM)
 3. Esperar 2-3 minutos hasta que el proyecto esté listo.
@@ -282,7 +288,7 @@ print("✅ Conexión exitosa!" if response else "❌ Conexión fallida")
 
 Ejecutar:
 ```bash
-python test_connection.py
+python test_conection.py
 ```
 
 ---
@@ -360,10 +366,7 @@ scrapy crawl getonboard
 python run_scraper.py
 ```
 
-#### Generar reporte
-```bash
-python analysis/report_generator.py
-```
+
 
 #### Iniciar el dashboard
 ```bash
@@ -409,48 +412,10 @@ git push -u origin main
 3. En **Advanced settings**, agregar los secretos `SUPABASE_URL` y `SUPABASE_KEY`.
 4. Hacer clic en **Deploy**.
 
-**Resultado:** El dashboard quedará disponible en `https://tu-app.streamlit.app`.
+**Resultado:** El dashboard está disponible en `https://latam-marketscraper-dashboard.streamlit.app/`.
 
 ---
 
-## Flujo de Trabajo del Equipo
-
-### Operaciones Diarias
-
-1. **Scraping automatizado:** Se ejecuta diariamente vía GitHub Actions.
-2. **Actualización de datos:** Fluye automáticamente hacia Supabase.
-3. **Dashboard:** Se actualiza al refrescar el navegador.
-4. **Monitoreo:** Revisar logs en la pestaña Actions de GitHub.
-
-### Roles del Equipo
-
-#### Desarrollador 1 — Spiders y ETL
-- Mantener el código de los scrapers.
-- Corregir scrapers que fallen.
-- Agregar nuevas fuentes de datos.
-- Mejorar la lógica de extracción.
-
-#### Desarrollador 2 — Datos y Análisis
-- Monitorear la calidad de los datos.
-- Crear notebooks de análisis.
-- Generar insights del mercado.
-- Actualizar algoritmos de tendencias.
-
-#### Desarrollador 3 — Dashboard y Reportes
-- Mejorar las visualizaciones.
-- Agregar nuevas funcionalidades al dashboard.
-- Generar reportes semanales.
-- Mejorar la experiencia de usuario.
-
-### Rutina Semanal
-
-**Lunes:** Revisar logs del fin de semana, verificar métricas de calidad y planificar mejoras de la semana.
-
-**Miércoles:** Análisis de datos a mitad de semana, prueba de nuevas funcionalidades en local y actualización de documentación.
-
-**Viernes:** Despliegue de mejoras, generación del reporte semanal y sesión de conocimiento compartido del equipo.
-
----
 
 ## Solución de Problemas
 
@@ -512,26 +477,11 @@ streamlit run app.py
 |---|---|
 | Vacantes procesadas | 500+ por semana |
 | Países cubiertos | 3+ (MX, CO, AR, CL, PE, EC) |
-| Sectores clasificados | 3+ (EdTech, Fintech, IA) |
+| Sectores clasificados | 5+ (EdTech, Fintech, IA, E-commerce, HealthTech) |
 | Skills extraídas | 50+ |
 | Uptime GitHub Actions | 95%+ |
 | Frecuencia de actualización | Diaria |
-
----
-
-## Recursos de Aprendizaje
-
-**Scrapy**
-- [Documentación oficial](https://docs.scrapy.org/)
-- [Tutorial introductorio](https://docs.scrapy.org/en/latest/intro/tutorial.html)
-
-**Supabase**
-- [Guía de inicio rápido](https://supabase.com/docs/guides/getting-started)
-- [Cliente Python](https://supabase.com/docs/reference/python/introduction)
-
-**Streamlit**
-- [Primeros pasos](https://docs.streamlit.io/library/get-started)
-- [Galería de ejemplos](https://streamlit.io/gallery)
+|
 
 ---
 
