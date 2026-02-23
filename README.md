@@ -205,13 +205,13 @@ pip install -r requirements_scraper.txt
 Crear archivo `.env`:
 ```env
 SUPABASE_URL=tu_supabase_url_aqui
-SUPABASE_KEY=tu_supabase_anon_key_aqui
+SUPABASE_SERVICE_KEY=tu_supabase_service_role_key_aqui
 ```
 
 Crear `.env.example` (para el equipo):
 ```env
 SUPABASE_URL=
-SUPABASE_KEY=
+SUPABASE_SERVICE_KEY=
 ```
 
 #### 4. Crear `.gitignore`
@@ -278,7 +278,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 url = os.getenv('SUPABASE_URL')
-key = os.getenv('SUPABASE_KEY')
+key = os.getenv('SUPABASE_SERVICE_KEY')
 
 client = create_client(url, key)
 response = client.table('jobs').select('*').limit(1).execute()
@@ -391,7 +391,7 @@ git push -u origin main
 1. Ir al repositorio → **Settings** → **Secrets and variables** → **Actions**.
 2. Agregar los siguientes secretos:
    - `SUPABASE_URL`
-   - `SUPABASE_KEY`
+   - `SUPABASE_SERVICE_KEY`
 
 ### 3. Activar GitHub Actions
 
