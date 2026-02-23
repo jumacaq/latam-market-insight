@@ -412,7 +412,7 @@ git push -u origin main
 3. En **Advanced settings**, agregar los secretos `SUPABASE_URL` y `SUPABASE_KEY`.
 4. Hacer clic en **Deploy**.
 
-**Resultado:** El dashboard está disponible en `https://latam-marketscraper-dashboard.streamlit.app/`.
+**Resultado:** El dashboard está disponible en [https://latam-marketscraper-dashboard.streamlit.app](https://latam-marketscraper-dashboard.streamlit.app/).
 
 ---
 
