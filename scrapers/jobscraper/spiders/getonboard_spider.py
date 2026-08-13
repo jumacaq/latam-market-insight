@@ -22,20 +22,24 @@ class GetonBoardSpider(scrapy.Spider):
     
     def parse(self, response):
         """Parse job listing page"""
-        #all_links = response.css('a::attr(href)').getall()
-        links = response.css('a.gb-results-list__item::attr(href)').getall()
         
+        links = response.css('a[href*="/jobs/"]::attr(href)').getall()
+        # Filtramos para conservar solo aquellas que corresponden a empleos individuales 
+        # (descartando páginas de categoría como /jobs/programming o /jobs/data-science)
+        job_links = [
+            l for l in links 
+            if l.count('/') >= 4 and not l.endswith('/jobs/programming') and not l.endswith('/jobs/data-science-analytics')
+        ]
+        # Eliminamos duplicados
+        unique_links = list(set(links))
+    
+        self.logger.info(f"🔍 Encontrados {len(unique_links)} enlaces de trabajos")
+                    
         for link in links:
             yield response.follow(link, callback=self.parse_job)
         
-        # Filtrar solo links de trabajos (no categorías)
-        #job_links = [l for l in all_links if '/empleos/' in l and l.count('/') >= 4]
-        #unique_links = list(set(job_links))
         
-        #self.logger.info(f"🔍 Encontrados {len(unique_links)} trabajos únicos")
-
-        # Follow pagination
-        next_page = response.css('a.next_page::attr(href)').get()
+        next_page = response.css('a.next_page::attr(href)').get() or response.css('a[rel="next"]::attr(href)').get()
         if next_page:
             yield response.follow(next_page, callback=self.parse)
     
