@@ -357,20 +357,34 @@ if not df_raw.empty:
                 )
             
             # Distribución por sector y país
-            st.subheader("🏭 Sectores por País (Top 5)")
-            sector_country = df_filtered.groupby(['country', 'sector']).size().reset_index(name='count')
-            top_countries = df_filtered['country'].value_counts().head(5).index
-            sector_country_top = sector_country[sector_country['country'].isin(top_countries)]
-            
-            fig_sector = px.bar(
-                sector_country_top,
-                x='country',
-                y='count',
-                color='sector',
-                barmode='stack',
-                labels={'count': 'Vacantes', 'country': 'País', 'sector': 'Sector'}
-            )
-            st.plotly_chart(fig_sector, use_container_width=True)
+                st.subheader("🏭 Sectores por País (Top 5)")
+                if not df_filtered.empty:
+                    # 1. Agrupamos y forzamos as_index=False
+                    sector_country = df_filtered.groupby(['country', 'sector'], as_index=False).size()
+                    sector_country.rename(columns={'size': 'count'}, inplace=True)
+    
+                    # 2. Obtenemos el top 5 de países
+                    top_countries = df_filtered['country'].value_counts().head(5).index.tolist()
+    
+                    # 3. Filtramos y hacemos una copia limpia descartando categorías fantasma
+                    sector_country_top = sector_country[sector_country['country'].isin(top_countries)].copy()
+    
+                    # 4. Aseguramos que la columna sea tipo texto (string puro)
+                    sector_country_top['sector'] = sector_country_top['sector'].astype(str)
+                    sector_country_top['country'] = sector_country_top['country'].astype(str)
+    
+                    if not sector_country_top.empty:
+                        fig_sector = px.bar(
+                            sector_country_top,
+                            x='country',
+                            y='count',
+                            color='sector',
+                            barmode='stack',
+                            labels={'count': 'Vacantes', 'country': 'País', 'sector': 'Sector'}
+                        )
+                        st.plotly_chart(fig_sector, use_container_width=True)
+                    else:
+                        st.info("No hay suficientes datos de sectores para mostrar el desglose por país.")
         
         # ========================================
         # TAB 3: SKILLS & TECH
