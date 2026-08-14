@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -20,20 +21,28 @@ st.set_page_config(
 )
 load_dotenv()
 
+
 # ========================================
 # 2. CONEXIÓN A SUPABASE
 # ========================================
 @st.cache_resource
 def init_connection():
     try:
-        # Streamlit Cloud: usa st.secrets
-        # Local: usa .env
-        if "SUPABASE_URL" in st.secrets:
-            url = st.secrets["SUPABASE_URL"]
-            key = st.secrets["SUPABASE_SERVICE_KEY"]
-        else:
+        url = None
+        key = None
+
+        # 1. Intentamos leer de Streamlit Cloud (st.secrets)
+        try:
+            if "SUPABASE_URL" in st.secrets:
+                url = st.secrets["SUPABASE_URL"]
+                key = st.secrets["SUPABASE_SERVICE_KEY"]
+        except Exception:
+            pass  # En local no existe secrets.toml, simplemente continuamos al .env
+
+        # 2. Si no estamos en la nube o no se leyeron, tomamos del .env local
+        if not url or not key:
             url = os.getenv("SUPABASE_URL")
-            key = os.getenv("SUPABASE_SERVICE_KEY")
+            key = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY")
         
         # Validaciones
         if not url or not key:
@@ -50,7 +59,6 @@ def init_connection():
             st.error(f"❌ SERVICE_KEY inválida (muy corta: {len(key)} chars)")
             st.stop()
         
-        # IMPORTANTE: Crear cliente SIN parámetros opcionales problemáticos
         return create_client(
             supabase_url=url,
             supabase_key=key
@@ -61,13 +69,12 @@ def init_connection():
         st.code(str(e))
         st.stop()
 
-supabase = init_connection()
-
 # ========================================
 # 3. CARGA DE DATOS
 # ========================================
 @st.cache_data(ttl=600)
 def load_data():
+    supabase = init_connection()
     res = supabase.table("jobs").select("*, skills(skill_name)").execute()
     df = pd.DataFrame(res.data)
     
