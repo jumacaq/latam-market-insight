@@ -355,7 +355,7 @@ if not df_raw.empty:
                     hide_index=True,
                     use_container_width=True
                 )
-            
+
                 st.subheader("🏭 Sectores por País (Top 5)")
                 if not df_filtered.empty:
                     top_countries = df_filtered['country'].value_counts().head(5).index.tolist()
@@ -436,7 +436,7 @@ if not df_raw.empty:
             # Skills por Seniority
             st.subheader("📊 Skills más demandadas por Seniority")
             if listado_skills:
-                # Crear dataset expandido
+            # Crear dataset expandido
                 skills_seniority = []
                 for idx, row in df_filtered.iterrows():
                     if isinstance(row['skills'], list):
@@ -446,11 +446,12 @@ if not df_raw.empty:
                                     'skill': skill['skill_name'],
                                     'seniority': row['seniority_level']
                                 })
-                
+    
                 if skills_seniority:
                     df_skills_sen = pd.DataFrame(skills_seniority)
                     skill_sen_counts = df_skills_sen.groupby(['seniority', 'skill']).size().reset_index(name='count')
-                    
+        
+                    # Top 5 skills por nivel (Limpio y compatible)
                     top_skills_per_level = (
                         skill_sen_counts
                         .sort_values(by=['seniority', 'count'], ascending=[True, False])
@@ -458,17 +459,25 @@ if not df_raw.empty:
                         .head(5)
                         .reset_index(drop=True)
                     )
-                    
-                    fig_skills_sen = px.bar(
-                        top_skills_per_level,
-                        x='seniority',
-                        y='count',
-                        color='skill',
+        
+                    # Matriz pivot rellenando vacíos con 0 (Sin KeyError de Plotly Express)
+                    pivot_skills = top_skills_per_level.pivot(index='seniority', columns='skill', values='count').fillna(0)
+        
+                    fig_skills_sen = go.Figure()
+                    for skill_name in pivot_skills.columns:
+                        fig_skills_sen.add_trace(go.Bar(
+                            name=str(skill_name),
+                            x=pivot_skills.index.astype(str),
+                            y=pivot_skills[skill_name]
+                        ))
+            
+                    fig_skills_sen.update_layout(
                         barmode='group',
-                        labels={'count': 'Frecuencia', 'seniority': 'Nivel', 'skill': 'Skill'}
+                        xaxis_title="Nivel",
+                        yaxis_title="Frecuencia",
+                        legend_title="Skill"
                     )
                     st.plotly_chart(fig_skills_sen, use_container_width=True)
-        
         # ========================================
         # TAB 4: EMPRESAS
         # ========================================
