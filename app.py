@@ -356,36 +356,32 @@ if not df_raw.empty:
                     use_container_width=True
                 )
             
-            # Distribución por sector y país
                 st.subheader("🏭 Sectores por País (Top 5)")
                 if not df_filtered.empty:
-                    # 1. Agrupamos y forzamos as_index=False
-                    sector_country = df_filtered.groupby(['country', 'sector'], as_index=False).size()
-                    sector_country.rename(columns={'size': 'count'}, inplace=True)
-    
-                    # 2. Obtenemos el top 5 de países
                     top_countries = df_filtered['country'].value_counts().head(5).index.tolist()
+                    df_top_geo = df_filtered[df_filtered['country'].isin(top_countries)]
     
-                    # 3. Filtramos y hacemos una copia limpia descartando categorías fantasma
-                    sector_country_top = sector_country[sector_country['country'].isin(top_countries)].copy()
-    
-                    # 4. Aseguramos que la columna sea tipo texto (string puro)
-                    sector_country_top['sector'] = sector_country_top['sector'].astype(str)
-                    sector_country_top['country'] = sector_country_top['country'].astype(str)
-    
-                    if not sector_country_top.empty:
-                        fig_sector = px.bar(
-                            sector_country_top,
-                            x='country',
-                            y='count',
-                            color='sector',
+                    if not df_top_geo.empty:
+                        # Crea la matriz pivote directamente en Pandas rellenando vacíos con 0
+                        sector_country = df_top_geo.groupby(['country', 'sector']).size().unstack(fill_value=0)
+        
+                        fig_sector = go.Figure()
+                        for sector_name in sector_country.columns:
+                            fig_sector.add_trace(go.Bar(
+                                name=str(sector_name),
+                                x=sector_country.index.astype(str),
+                                y=sector_country[sector_name]
+                            ))
+            
+                        fig_sector.update_layout(
                             barmode='stack',
-                            labels={'count': 'Vacantes', 'country': 'País', 'sector': 'Sector'}
+                            xaxis_title="País",
+                            yaxis_title="Vacantes",
+                            legend_title="Sector"
                         )
                         st.plotly_chart(fig_sector, use_container_width=True)
                     else:
-                        st.info("No hay suficientes datos de sectores para mostrar el desglose por país.")
-        
+                        st.info("No hay suficientes datos para mostrar el desglose.")
         # ========================================
         # TAB 3: SKILLS & TECH
         # ========================================
@@ -455,10 +451,13 @@ if not df_raw.empty:
                     df_skills_sen = pd.DataFrame(skills_seniority)
                     skill_sen_counts = df_skills_sen.groupby(['seniority', 'skill']).size().reset_index(name='count')
                     
-                    # Top 5 skills por nivel
-                    top_skills_per_level = skill_sen_counts.groupby('seniority').apply(
-                        lambda x: x.nlargest(5, 'count')
-                    ).reset_index(drop=True)
+                    top_skills_per_level = (
+                        skill_sen_counts
+                        .sort_values(by=['seniority', 'count'], ascending=[True, False])
+                        .groupby('seniority')
+                        .head(5)
+                        .reset_index(drop=True)
+                    )
                     
                     fig_skills_sen = px.bar(
                         top_skills_per_level,
