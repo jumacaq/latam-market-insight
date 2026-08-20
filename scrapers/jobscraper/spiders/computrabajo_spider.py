@@ -102,6 +102,7 @@ class ComputrabajoSpider(scrapy.Spider):
                 company = company.strip().split("\n")[0]
         if company:
             company = company.strip()
+            company = re.sub(r"^acerca de\s+", "", company, flags=re.IGNORECASE).strip()
             if len(company) < 3 or company.lower() in {"empresa", "ver empresa"}:
                 company = None        
         item["company_name"] = company

@@ -241,7 +241,7 @@ if not df_raw.empty:
         st.warning("⚠️ No hay registros con los filtros seleccionados.")
     else:
         # ========================================
-        # 10. TABS CON VISUALIZACIONES
+        # TABS CON VISUALIZACIONES
         # ========================================
         tab1, tab2, tab3, tab4, tab5 = st.tabs([
             "📊 Overview", 
@@ -356,7 +356,7 @@ if not df_raw.empty:
                     use_container_width=True
                 )
 
-                st.subheader("🏭 Sectores por País (Top 5)")
+                st.subheader("🏭 Sectores por País(Top 5)")
                 if not df_filtered.empty:
                     top_countries = df_filtered['country'].value_counts().head(5).index.tolist()
                     df_top_geo = df_filtered[df_filtered['country'].isin(top_countries)]
@@ -451,7 +451,7 @@ if not df_raw.empty:
                     df_skills_sen = pd.DataFrame(skills_seniority)
                     skill_sen_counts = df_skills_sen.groupby(['seniority', 'skill']).size().reset_index(name='count')
         
-                    # Top 5 skills por nivel (Limpio y compatible)
+                    # Top 5 skills por nivel de seniority
                     top_skills_per_level = (
                         skill_sen_counts
                         .sort_values(by=['seniority', 'count'], ascending=[True, False])
@@ -460,7 +460,7 @@ if not df_raw.empty:
                         .reset_index(drop=True)
                     )
         
-                    # Matriz pivot rellenando vacíos con 0 (Sin KeyError de Plotly Express)
+                    # Matriz pivot rellenando vacíos con 0 
                     pivot_skills = top_skills_per_level.pivot(index='seniority', columns='skill', values='count').fillna(0)
         
                     fig_skills_sen = go.Figure()
@@ -488,16 +488,17 @@ if not df_raw.empty:
                 # Top 20 empresas
                 st.subheader("🏢 Top 20 Empresas Contratando")
                 company_counts = df_filtered['company_name'].value_counts().head(20)
-                fig_companies = px.bar(
-                    x=company_counts.values,
-                    y=company_counts.index,
-                    orientation='h',
-                    labels={'x': 'Vacantes', 'y': 'Empresa'},
-                    color=company_counts.values,
-                    color_continuous_scale='Sunset'
-                )
-                fig_companies.update_layout(showlegend=False, height=600)
-                st.plotly_chart(fig_companies, use_container_width=True)
+                if not company_counts.empty:
+                    fig_companies = go.Figure(data=[
+                        go.Bar(
+                            x=company_counts.values,
+                            y=company_counts.index.astype(str),
+                            orientation='h',
+                            marker=dict(color=company_counts.values, colorscale='Sunset'),
+                        )
+                    ])
+                    fig_companies.update_layout(showlegend=False, height=600,xaxis_title="Vacantes", yaxis_title="Empresa",yaxis=dict(autorange="reversed"))
+                    st.plotly_chart(fig_companies, use_container_width=True)
             
             with col_comp2:
                 # Empresas por seniority
@@ -511,16 +512,31 @@ if not df_raw.empty:
                     company_seniority['company_name'].isin(top_10_companies)
                 ]
                 
-                fig_comp_sen = px.bar(
-                    company_sen_top,
-                    x='company_name',
-                    y='count',
-                    color='seniority_level',
-                    barmode='stack',
-                    labels={'count': 'Vacantes', 'company_name': 'Empresa'}
-                )
-                fig_comp_sen.update_xaxes(tickangle=45)
-                st.plotly_chart(fig_comp_sen, use_container_width=True)
+                if not company_sen_top.empty:
+                    pivot_comp_sen = company_sen_top.pivot(
+                        index='company_name', 
+                        columns='seniority_level', 
+                        values='count'
+                    ).fillna(0)
+                    fig_comp_sen = go.Figure()
+                    for seniority in pivot_comp_sen.columns:
+                        fig_comp_sen.add_trace(go.Bar(
+                            name=str(seniority),
+                            x=pivot_comp_sen.index.astype(str),
+                            y=pivot_comp_sen[seniority]
+                        ))
+                    
+                    fig_comp_sen.update_layout(
+                        barmode='stack',
+                        xaxis_title='Empresa',
+                        yaxis_title='Vacantes',
+                        legend_title='Seniority',
+                        xaxis=dict(tickangle=-45)
+                    )
+                
+                    st.plotly_chart(fig_comp_sen, use_container_width=True)
+                else:
+                    st.info("No hay suficientes datos para mostrar el perfil de contratación.")
             
             # Salarios por empresa (solo Computrabajo)
             df_with_salary = df_filtered[df_filtered['has_salary']]
@@ -538,76 +554,107 @@ if not df_raw.empty:
         with tab5:
             st.subheader("📈 Calidad de Datos por Plataforma")
             
-            quality_df = get_platform_quality_score(df_filtered)
+            if not df_filtered.empty:
+                quality_df = get_platform_quality_score(df_filtered)
             
-            col_q1, col_q2 = st.columns(2)
+                col_q1, col_q2 = st.columns(2)
             
-            with col_q1:
+                with col_q1:
                 # Score de calidad
-                fig_quality = px.bar(
-                    quality_df,
-                    x='platform',
-                    y='quality_score',
-                    text='quality_score',
-                    labels={'platform': 'Plataforma', 'quality_score': 'Score de Calidad'},
-                    color='quality_score',
-                    color_continuous_scale='RdYlGn'
-                )
-                fig_quality.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-                st.plotly_chart(fig_quality, use_container_width=True)
+                    if not quality_df.empty:
+                        fig_quality = go.Figure(data=[
+                            go.Bar(
+                                x=quality_df['platform'].astype(str),
+                                y=quality_df['quality_score'],
+                                text=quality_df['quality_score'],
+                                texttemplate='%{text:.1f}%',
+                                textposition='outside',
+                                marker=dict(color=quality_df['quality_score'], colorscale='Viridis')
+                            )
+                        ])
+                        fig_quality.update_layout(
+                            xaxis_title='Plataforma',
+                            yaxis_title='Score de Calidad',
+                            showlegend=False,
+                        )
+                        st.plotly_chart(fig_quality, use_container_width=True)
             
-            with col_q2:
-                # Métricas detalladas
-                st.dataframe(
-                    quality_df.style.format({
-                        'desc_rate': '{:.1f}%',
-                        'salary_rate': '{:.1f}%',
-                        'quality_score': '{:.1f}%'
-                    }),
-                    column_config={
-                        'platform': 'Plataforma',
-                        'jobs': 'Vacantes',
-                        'desc_rate': 'Tasa Descripción',
-                        'salary_rate': 'Tasa Salario',
-                        'quality_score': 'Score Final'
-                    },
-                    hide_index=True,
-                    use_container_width=True
-                )
+                with col_q2:
+                    if not quality_df.empty:
+                    # Métricas detalladas
+                        st.dataframe(
+                            quality_df.style.format({
+                                'desc_rate': '{:.1f}%',
+                                'salary_rate': '{:.1f}%',
+                                'quality_score': '{:.1f}%'
+                            }),
+                            column_config={
+                                'platform': 'Plataforma',
+                                'jobs': 'Vacantes',
+                                'desc_rate': 'Tasa Descripción',
+                                'salary_rate': 'Tasa Salario',
+                                'quality_score': 'Score Final'
+                            },
+                            hide_index=True,
+                            use_container_width=True
+                        )
             
-            # Comparativa de completitud
-            st.subheader("📊 Completitud de Campos por Plataforma")
-            completeness_data = []
-            for platform in df_filtered['source_platform'].unique():
-                df_plat = df_filtered[df_filtered['source_platform'] == platform]
-                completeness_data.append({
-                    'Plataforma': platform,
-                    'Descripción': ((df_plat['description'].notna()) & 
-                                   (df_plat['description'] != 'Descripción no disponible.')).sum() / len(df_plat) * 100,
-                    'Salario': df_plat['has_salary'].sum() / len(df_plat) * 100,
-                    'Requisitos': df_plat['requirements'].notna().sum() / len(df_plat) * 100,
-                    'Ubicación': df_plat['location'].notna().sum() / len(df_plat) * 100
-                })
-            
-            df_completeness = pd.DataFrame(completeness_data)
-            df_completeness_melted = df_completeness.melt(
-                id_vars='Plataforma',
-                var_name='Campo',
-                value_name='Completitud'
-            )
-            
-            fig_completeness = px.bar(
-                df_completeness_melted,
-                x='Campo',
-                y='Completitud',
-                color='Plataforma',
-                barmode='group',
-                labels={'Completitud': 'Completitud (%)'}
-            )
-            st.plotly_chart(fig_completeness, use_container_width=True)
+                # Comparativa de completitud
+                st.subheader("📊 Completitud de Campos por Plataforma")
+                completeness_data = []
+                for platform in df_filtered['source_platform'].unique():
+                    df_plat = df_filtered[df_filtered['source_platform'] == platform]
+                    
+                    total_plat = len(df_plat)
+                    if total_plat > 0:
+                        completeness_data.append({
+                            'Plataforma': platform,
+                            'Descripción': ((df_plat['description'].notna()) & 
+                                           (df_plat['description'] != 'Descripción no disponible.')).sum() / total_plat * 100,
+                            'Salario': df_plat['has_salary'].sum() / total_plat * 100,
+                            'Requisitos': df_plat['requirements'].notna().sum() / total_plat * 100,
+                            'Ubicación': df_plat['location'].notna().sum() / total_plat * 100
+                            })
+                    
+                if completeness_data:
+                    df_completeness = pd.DataFrame(completeness_data)
+                    df_completeness_melted = df_completeness.melt(
+                        id_vars='Plataforma',
+                        var_name='Campo',
+                        value_name='Completitud'
+                    )
+                        
+                       
+                    # 💡 Matriz Pivot 
+                    pivot_completeness = df_completeness_melted.pivot(
+                        index='Campo', 
+                        columns='Plataforma', 
+                        values='Completitud'
+                    ).fillna(0)
+                    
+                    fig_completeness = go.Figure()
+                    for plat_name in pivot_completeness.columns:
+                        fig_completeness.add_trace(
+                            go.Bar(
+                                name=str(plat_name),
+                                x=pivot_completeness.index.astype(str),
+                                y=pivot_completeness[plat_name]
+                            )          
+                        )
+                    fig_completeness.update_layout(
+                        barmode='group',
+                        xaxis_title="Campo",
+                        yaxis_title="Completitud (%)",
+                        legend_title="Plataforma"
+                    )
+                    st.plotly_chart(fig_completeness, use_container_width=True)    
+
+
+                else:
+                    st.info("No hay suficientes datos para mostrar la completitud de campos.")
         
         # ========================================
-        # 11. TABLA DE DATOS
+        # TAB6: TABLA DE DATOS
         # ========================================
         st.subheader("📋 Tabla de Vacantes Filtradas")
         
@@ -642,7 +689,7 @@ else:
     st.stop()
 
 # ========================================
-# 12. FOOTER
+# FOOTER
 # ========================================
 st.markdown("---")
 st.caption("🤖 Dashboard creado con Streamlit | Datos de LinkedIn, Computrabajo y GetonBoard")
