@@ -7,7 +7,7 @@ on:
 
 jobs:
   scrape-and-update:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60  # Timeout de 1 hora por seguridad
     
     steps:
