@@ -1,6 +1,7 @@
 # Scraping
 scrapy==2.11.0
 beautifulsoup4==4.12.2
+w3lib==2.3.1
 selenium==4.15.2
 requests==2.31.0
 webdriver-manager==4.0.1
